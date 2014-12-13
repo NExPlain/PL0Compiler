@@ -16,10 +16,10 @@ import java.util.Arrays;
 public class Scanner {
 
     public final static int numMax = 14;        //数字的最大位数
-    String currentBuffer;
-    public int currentPosition;
-    public int currentLineNumber;
-    public char currentChar;
+    String Buffer;
+    public int positionInLine;
+    public int lineNumber;
+    public char ch;
     private BufferedReader cin;
 
     public Scanner(String fileURL) {
@@ -29,28 +29,28 @@ public class Scanner {
             ex.printStackTrace();
             System.out.println("File not found!");
         }
-        currentBuffer = "";
-        currentLineNumber = 0;
-        currentPosition = 0;
+        Buffer = "";
+        lineNumber = 0;
+        positionInLine = 0;
     }
 
     public char getch() {
-        if (currentPosition == currentBuffer.length()) {
+        if (positionInLine == Buffer.length()) {
             try {
                 do {
-                    currentBuffer = cin.readLine();
-                    currentLineNumber++;
-                    currentBuffer.trim();
-                    System.out.println(currentBuffer); // 把读入的源程序同时输出到output文件上
-                } while (currentBuffer.equals(""));
+                    Buffer = cin.readLine();
+                    lineNumber++;
+                    Buffer.trim();
+                    System.out.println(Buffer); // 把读入的源程序同时输出到output文件上
+                } while (Buffer.equals(""));
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("reading character error");
             }
-            currentBuffer += " ";                     //  加一个空格表示到达行末尾，与下一行的开头分开
-            currentPosition = 0;
+            Buffer += " ";                     //  加一个空格表示到达行末尾，与下一行的开头分开
+            positionInLine = 0;
         }
-        return currentChar = currentBuffer.charAt(currentPosition++);
+        return ch = Buffer.charAt(positionInLine++);
     }
 
     /**
@@ -78,13 +78,13 @@ public class Scanner {
      */
     public Symbol getsym() throws Pl0Exception {
         Symbol currentSym = null;
-        currentChar = getch();
-        while (currentChar == ' ') {
-            currentChar = getch();
+        ch = getch();
+        while (ch == ' ') {
+            ch = getch();
         }
-        if (isDigit(currentChar)) {
+        if (isDigit(ch)) {
             currentSym = AnalysisNumber();
-        } else if (isAlpha(currentChar)) {
+        } else if (isAlpha(ch)) {
             currentSym = AnalysisWords();
         } else {
             currentSym = AnalysisOperator();
@@ -99,10 +99,10 @@ public class Scanner {
      */
     private Symbol AnalysisOperator() {
         Symbol sym = null;
-        switch (currentChar) {
+        switch (ch) {
             case ':':
                 getch();
-                if (currentChar == '=') {
+                if (ch == '=') {
                     sym = new Symbol(Symbol.SymbolType.becomes.getIntValue());
                 } else {
                     sym = new Symbol(Symbol.SymbolType.nul.getIntValue());
@@ -110,10 +110,10 @@ public class Scanner {
                 break;
             case '<':
                 getch();
-                if (currentChar == '=') {
+                if (ch == '=') {
                     sym = new Symbol(Symbol.SymbolType.leq.getIntValue());
                     getch();
-                } else if (currentChar == '>') {
+                } else if (ch == '>') {
                     sym = new Symbol(Symbol.SymbolType.neq.getIntValue());
                     getch();
                 } else {
@@ -122,7 +122,7 @@ public class Scanner {
                 break;
             case '>':
                 getch();
-                if (currentChar == '=') {
+                if (ch == '=') {
                     sym = new Symbol(Symbol.SymbolType.geq.getIntValue());
                     getch();
                 } else {
@@ -130,7 +130,7 @@ public class Scanner {
                 }
                 break;
             default:
-                sym = new Symbol(Symbol.operatorToIdx.get(currentChar));
+                sym = new Symbol(Symbol.operatorToIdx.get(ch));
                 getch();
         }
         return sym;
@@ -144,9 +144,9 @@ public class Scanner {
     private Symbol AnalysisWords(){
         StringBuffer str = new StringBuffer();
         do {
-            str.append(currentChar);
+            str.append(ch);
             getch();
-        } while (isDigit(currentChar) || isAlpha(currentChar));
+        } while (isDigit(ch) || isAlpha(ch));
 
         String token = str.toString();
         int idx = Arrays.binarySearch(Symbol.usedWords, token);
@@ -169,8 +169,8 @@ public class Scanner {
      */
     private Symbol AnalysisNumber() throws Pl0Exception {
         Symbol sym = new Symbol(Symbol.SymbolType.number.getIntValue());
-        while (isDigit(currentChar)) {
-            sym.content += currentChar;
+        while (isDigit(ch)) {
+            sym.content += ch;
             getch();
         }
         if(sym.content.length() >= numMax){

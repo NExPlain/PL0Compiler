@@ -5,11 +5,21 @@ package com.company;
  */
 public class SymbolTable {
 
+    /**
+     * 当前符号表指针
+     */
+    public int tablePtr = 0;
+
     private static final int MaxTableSize = 1000;
+    public static final int levMax = 3;
+
     public static int top = 0;
 
     public Item[] tab = new Item[MaxTableSize]; // 栈式符号表
 
+    public SymbolTable(){
+        tablePtr = top = 0;
+    }
     public static enum ItemKind {
         constant(0),
         variable(1),
@@ -32,6 +42,7 @@ public class SymbolTable {
         int value;                // 值，当kind为常量时
         int level;              // 嵌套层次
         int addr;               // 地址，当kind为常量或过程时
+        int size;               // 该item的大小
 
         public Item(String name, ItemKind kind, int value, int level, int addr) {
             this.name = name;

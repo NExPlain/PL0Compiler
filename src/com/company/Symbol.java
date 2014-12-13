@@ -9,6 +9,7 @@ import java.util.Map;
  */
 public class Symbol {
 
+    public static final int symbolNumber = 35;
     // 保留字对应的符号值
     public static final int[] usedWordsId = new int[]{
             SymbolType.beginsym.getIntValue(),
@@ -52,7 +53,7 @@ public class Symbol {
     }
 
     public String content;
-    private int typeid;
+    public int typeid;
 
     public Symbol(int typeid) {
         this.typeid = typeid;
