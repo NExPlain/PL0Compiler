@@ -1,4 +1,4 @@
-package com.company;
+package pl0compiler;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

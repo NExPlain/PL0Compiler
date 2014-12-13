@@ -1,4 +1,6 @@
-package com.company;
+package pl0compiler;
+
+import java.io.IOException;
 
 /**
  * Created by lizhen on 14/12/3.
@@ -12,6 +14,8 @@ public class SymbolTable {
 
     private static final int MaxTableSize = 1000;
     public static final int levMax = 3;
+    public static final int addrMax = 1000000;      // 最大允许的数值
+    private boolean debugging = true;
 
     public static int top = 0;
 
@@ -137,6 +141,40 @@ public class SymbolTable {
             }
         }
         tab[top++] = item;
+    }
+
+
+    /**
+     * 输出符号表内容，摘自block()函数
+     *
+     * @param start 当前符号表区间的左端
+     */
+    void debugTable(int start) {
+        if (!debugging) //显示名字表与否
+        {
+            return;
+        }
+        System.out.println("**** Symbol Table ****");
+        if (start > tablePtr) {
+            System.out.println("  NULL");
+        }
+        for (int i = start + 1; i <= tablePtr; i++) {
+            try {
+                String msg = "unknown table item !";
+                if(tab[i].kind == ItemKind.constant){
+                    msg = "   " + i + "  const: " + tab[i].name + "  val: " + tab[i].value;
+                }else if(tab[i].kind == ItemKind.variable){
+                    msg = "    " + i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  addr: " + tab[i].addr;
+                }else if(tab[i].kind == ItemKind.procedure){
+                    msg = "    " + i + " proc: " + tab[i].name + "  lev: " + tab[i].level + "  addr: " + tab[i].size;
+                }
+                System.out.println(msg);
+                PL0.tableWriter.write(msg + '\n');
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                System.out.println("***write table intfo meet with error***");
+            }
+        }
     }
 
 }

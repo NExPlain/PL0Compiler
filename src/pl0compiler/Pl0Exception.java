@@ -1,4 +1,4 @@
-package com.company;
+package pl0compiler;
 
 /**
  * Created by lizhen on 14/12/4.

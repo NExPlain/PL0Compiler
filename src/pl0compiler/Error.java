@@ -1,4 +1,4 @@
-package com.company;
+package pl0compiler;
 
 import sun.util.resources.th.CalendarData_th;
 
@@ -38,12 +38,15 @@ public class Error {
             "24.表达式不能以此符号开始",
             "25.这个数太大",
             "26.应该为左括号",
+
             "27.标识符定义不正确：不能以数字开头",  // 以下开始为自定义的错误类型
             "28.标识符定义不正确：包含不合法符号",
             "29.重复声明变量",
             "30.递归层数超过限制",
             "31. 嵌套层数过高，应在[1,3]范围内",
-            "32. repeat后没有until"
+            "32. repeat后没有until",
+            "33. read语句中需要是变量",
+            "34. 超过符号表大小限制"
         };
     public static void outputErrMessage(int errID, int lineNumber){
         System.out.println("***" + "Error Message at " + lineNumber + " Line : " + errorInfo[errID] + "***");

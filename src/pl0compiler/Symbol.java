@@ -1,7 +1,6 @@
-package com.company;
+package pl0compiler;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by lizhen on 14/12/3.
@@ -53,10 +52,10 @@ public class Symbol {
     }
 
     public String content;
-    public int typeid;
+    public int symtype;
 
-    public Symbol(int typeid) {
-        this.typeid = typeid;
+    public Symbol(int symtype) {
+        this.symtype = symtype;
         content = "";
     }
 
