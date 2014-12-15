@@ -2,6 +2,8 @@ package pl0compiler;
 
 import sun.util.resources.th.CalendarData_th;
 
+import java.io.IOException;
+
 /**
  * Created by lizhen on 14/12/3.
  */
@@ -46,10 +48,20 @@ public class Error {
             "31. 嵌套层数过高，应在[1,3]范围内",
             "32. repeat后没有until",
             "33. read语句中需要是变量",
-            "34. 超过符号表大小限制"
+            "34. 超过符号表大小限制",
+            "35. 无法识别的标识符"
         };
     public static void outputErrMessage(int errID, int lineNumber){
-        System.out.println("***" + "Error Message at " + lineNumber + " Line : " + errorInfo[errID] + "***");
+        String errMessage = "Error Message at " + " Line " + lineNumber + " : " + errorInfo[errID];
+        try {
+            PL0.errWriter.write(errMessage + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(errMessage);
         errCnt ++ ;
+    }
+    public static void debugging(Symbol sym){
+        System.out.println(Symbol.SymbolTypeName[sym.symtype]);
     }
 }

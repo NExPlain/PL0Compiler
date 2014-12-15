@@ -17,12 +17,11 @@ public class SymbolTable {
     public static final int addrMax = 1000000;      // 最大允许的数值
     private boolean debugging = true;
 
-    public static int top = 0;
-
-    public Item[] tab = new Item[MaxTableSize]; // 栈式符号表
+    public Item[] tab;// 栈式符号表
 
     public SymbolTable(){
-        tablePtr = top = 0;
+        tablePtr = 0;
+        tab = new Item[MaxTableSize];
     }
     public static enum ItemKind {
         constant(0),
@@ -70,12 +69,13 @@ public class SymbolTable {
      * @return 返回位置为idx的Item
      */
     public Item getItemAt(int idx) {
-        if (idx > top || idx < 0)
+        if (idx >= MaxTableSize || idx < 0)
             try {
                 throw new Exception("***Access Violation in Symbol Table.***");
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        if(tab[idx] == null)tab[idx] = new Item();
         return tab[idx];
     }
 
@@ -88,7 +88,7 @@ public class SymbolTable {
      */
     public int position(String s) {
         try {
-            for (int i = top - 1; i >= 0; i--) {
+            for (int i = tablePtr - 1; i >= 0; i--) {
                 if (getItemAt(i).name.equals(s)) {
                     return i;
                 }
@@ -109,30 +109,31 @@ public class SymbolTable {
      * @return
      * @throws Exception
      */
-    public void enter(Symbol sym, ItemKind kind, int level, int dx) throws Pl0Exception {
-        if (top == MaxTableSize){
+    public void enter(Symbol sym, ItemKind kind, int level, int dx) throws PL0Exception {
+        if (tablePtr == MaxTableSize){
             try {
                 throw new Exception("符号表溢出错误！");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        for(int i = top-1 ; i >= 0 ; i --){
+        for(int i = tablePtr-1 ; i >= 0 ; i --){
             if(tab[i].level != level)break;
-            if(tab[i].name == sym.content){
-                throw new Pl0Exception(29);
+            if(tab[i].name == sym.name){
+                throw new PL0Exception(29);
             }
         }
         Item item = new Item();
-        item.name = sym.content;
+        item.name = sym.name;
         item.kind = kind;
-        if(kind.getIntValue() == ItemKind.constant.getIntValue()){  // 常量名
-            item.value = Integer.parseInt(sym.content);             // TODO 不需要加level?
-        }else if(kind.getIntValue() == ItemKind.variable.getIntValue()){    // 变量名
+        if(kind.getIntValue() == ItemKind.constant.getIntValue()){          // 常量名
+            item.value = Integer.parseInt(sym.content);                        // const 变量不需要level
+        }else if(kind.getIntValue() == ItemKind.variable.getIntValue()){    // 变量
             item.level = level;
-            item.addr = dx;                                                 // TODO 地址为偏移量？
+            item.addr = dx;                                                 // 相对此过程的偏移量
         }else if(kind.getIntValue() == ItemKind.procedure.getIntValue()){   // 过程名
             item.level = level;
+            item.addr = 0;                                                 // TODO 过程的addr需要设定为pcode指令序列的入口地址
         }else{
             try {
                 throw new Exception("Unknow Item kind in the SymbolTable");
@@ -140,7 +141,7 @@ public class SymbolTable {
                 e.printStackTrace();
             }
         }
-        tab[top++] = item;
+        tab[tablePtr++] = item;
     }
 
 
@@ -150,15 +151,20 @@ public class SymbolTable {
      * @param start 当前符号表区间的左端
      */
     void debugTable(int start) {
-        if (!debugging) //显示名字表与否
+        if (!debugging)
         {
             return;
         }
-        System.out.println("**** Symbol Table ****");
+        try {
+            PL0.tableWriter.write("**** Symbol Table ****\n");
+            PL0.tableWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         if (start > tablePtr) {
             System.out.println("  NULL");
         }
-        for (int i = start + 1; i <= tablePtr; i++) {
+        for (int i = start; i < tablePtr; i++) {
             try {
                 String msg = "unknown table item !";
                 if(tab[i].kind == ItemKind.constant){
@@ -170,6 +176,7 @@ public class SymbolTable {
                 }
                 System.out.println(msg);
                 PL0.tableWriter.write(msg + '\n');
+                PL0.tableWriter.flush();
             } catch (IOException ex) {
                 ex.printStackTrace();
                 System.out.println("***write table intfo meet with error***");

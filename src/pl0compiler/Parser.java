@@ -30,7 +30,7 @@ public class Parser {
 
     /**
      * 当前作用域的堆栈帧大小，或者说是数据大小
-     * 计算每个变量在运行栈中相对本过程基地址的偏移量
+     * 计算每个变量在运行栈中相对本过程基地址的偏移量 （注意是相对本过程的偏移量）
      * 放在symboltable的address域
      * 生成目标代码放在code中的a域
      */
@@ -88,14 +88,12 @@ public class Parser {
      * 获取下一个语法符号
      */
     public void nextsym(){
-        do {
-            try {
-                sym = lex.getsym();
-            } catch (Pl0Exception e) {
-                sym = null;
-                err.outputErrMessage(e.errType, lex.lineNumber);
-            }
-        }while(sym == null);
+        try {
+            sym = lex.getsym();
+        } catch (PL0Exception e) {
+            sym = new Symbol(Symbol.SymbolType.nul.getIntValue());
+            err.outputErrMessage(e.errType, lex.lineNumber);
+        }
     }
 
     /**
@@ -114,28 +112,35 @@ public class Parser {
         /**
          * 在某一部分（如一条语句，一个表达式）将要结束时,我们希望下一个符号属于某集合
          * （该部分的FOLLOW集合），test负责这项检测，并且负责当检测不通过时的补救措施，程
-         * 序在需要检测时指定当前需要的符号集合和补救用的集合（如之前未完成部分的后跟符 号），以及检测不通过时的错误号。
+         * 序在需要检测时指定当前需要的符号集合和补救用的集合（如之前未完成部分的后跟符号），以及检测不通过时的错误号。
          */
+        System.out.println("test start");
         if (!s1.get(sym.symtype)) {
             err.outputErrMessage(errcode,lex.lineNumber);
             //当检测不通过时，不停地获取符号，直到它属于需要的集合
             s1.or(s2);                                                     //把s2集合补充进s1集合
             while (!s1.get(sym.symtype)) {
+                if(sym.symtype == Symbol.SymbolType.nul.getIntValue()){
+                    //err.outputErrMessage(errcode, lex.lineNumber);
+                    System.out.println("test end");
+                    return;
+                }
                 nextsym();
             }
         }
+        System.out.println("test end");
     }
 
     /**
      * <程序> ::= <分程序>. 启动语法分析过程
      */
     public void parse(){
-        BitSet nxtLev = new BitSet(Symbol.symbolNumber);
-        nxtLev.or(declBegSyms);
-        nxtLev.or(stateBegSyms);
-        nxtLev.set(Symbol.SymbolType.period.getIntValue());
+        BitSet fsys = new BitSet(Symbol.symbolNumber);
+        fsys.or(declBegSyms);                                         // 可以是声明开头
+        fsys.or(stateBegSyms);                                        // 可以是语句开头
+        fsys.set(Symbol.SymbolType.period.getIntValue());
 
-        block(0, nxtLev);           // 解析<分程序>
+        block(0, fsys);                                               // 解析<分程序>
 
         if(sym.symtype != Symbol.SymbolType.period.getIntValue()){
             err.outputErrMessage(9, lex.lineNumber);
@@ -146,52 +151,58 @@ public class Parser {
      * 分程序分析
      * <分程序>：=[<常数说明部分>][<变量说明部分>]{<过程说明部分>}<语句>
      *
+     * FIRST(S):const, var, procedure, ident, if, call, begin, while, read, write
+     * FOLLOW(s):. ;
      * @param lev 当前分程序所在层
      * @param fsys 当前模块的FOLLOW集合
      */
     public void block(int lev, BitSet fsys) {
+
         BitSet nxtlev = new BitSet(Symbol.symbolNumber);
 
         int dx0 = dx,               //记录本层之前的数据量,以便返回时恢复
-                tx0 = table.tablePtr,   //记录本层名字的初始位置
+                tx0 = table.tablePtr,   //记录本层名字的初始位置0
                 cx0;
 
         //置初始值为3的原因是：
         //每一层最开始的位置有三个空间用于存放静态链SL、动态链DL和返回地址RA
         dx = 3;
 
-        //当前pcode代码的地址，传给当前符号表的addr项
-        table.getItemAt(table.tablePtr).addr = interp.arrayPtr;                      //在符号表的当前位置记录下这个jmp指令在代码段中的位置
-        interp.gen(Pcode.JMP, 0, 0);                             //JMP 0 0
+        //当前pcode代码的地址，传给当前符号表的addr项（第几条pcode代码）
+        table.getItemAt(table.tablePtr).addr = interp.arrayPtr;                                 //在符号表的当前位置tablePtr记录下这个jmp指令在代码段中的位置(即arrayPtr)
+        interp.gen(Pcode.JMP, 0, 0);                                                            //JMP 0 0 TODO 不确定是否应是0 0
 
         if (lev > SymbolTable.levMax) //必须先判断嵌套层层数
         {
-            err.outputErrMessage(31,lex.lineNumber);                                          //嵌套层数过大
+            err.outputErrMessage(31,lex.lineNumber);                                          // error 31: 嵌套层数过大
         }
-        //分析<说明部分>
         do {
+            //分析<说明部分>
             //<常量说明部分> ::= const<常量定义>{,<常量定义>};
             if (sym.symtype == Symbol.SymbolType.constsym.getIntValue()) {                 //例如const a=0,b=0,... ...,z=0;
                 nextsym();
-                constdeclaration(lev);                            //分析<常量定义>
+                constdeclaration(lev);                                                     //分析<常量定义>
+                nextsym();
+                System.out.println("fucking shit");
                 while (sym.symtype == Symbol.SymbolType.comma.getIntValue()) {
                     nextsym();
                     constdeclaration(lev);
+                    System.out.println("fucking shit");
+                    nextsym();
                 }
-
-                if (sym.symtype == Symbol.SymbolType.semicolon.getIntValue()) //如果是分号，表示常量申明结束
+                if (sym.symtype == Symbol.SymbolType.semicolon.getIntValue())                   //如果是分号，表示常量申明结束
                 {
                     nextsym();
                 } else {
                     err.outputErrMessage(5,lex.lineNumber);                                     //漏了逗号或者分号
                 }
+                System.out.println("fucking shit");
             }
-
             //分析<变量说明>
             //var<标识符>{,<标识符>};
             if (sym.symtype == Symbol.SymbolType.varsym.getIntValue()) {                       //读入的数为var
                 nextsym();
-                vardeclaration(lev);                                  //识别<标识符>
+                vardeclaration(lev);                                                        //识别<标识符>
                 while (sym.symtype == Symbol.SymbolType.comma.getIntValue()) {              //识别{,<标识符>}
                     nextsym();
                     vardeclaration(lev);
@@ -200,7 +211,7 @@ public class Parser {
                 {
                     nextsym();
                 } else {
-                    err.outputErrMessage(5,lex.lineNumber);                                       //  漏了逗号或者分号
+                    err.outputErrMessage(5,lex.lineNumber);                                       // error 5: 漏了逗号或者分号
                 }
             }
 
@@ -214,18 +225,18 @@ public class Parser {
                 if (sym.symtype == Symbol.SymbolType.ident.getIntValue()) {                      //填写符号表
                     try {
                         table.enter(sym, SymbolTable.ItemKind.procedure, lev, dx);                                             //当前作用域的大小
-                    }catch (Pl0Exception e){
+                    }catch (PL0Exception e){
                         err.outputErrMessage(e.errType, lex.lineNumber);
                     }
                     nextsym();
                 } else {
-                    err.outputErrMessage(4, lex.lineNumber);                                     //procedure后应为标识符
+                    err.outputErrMessage(4, lex.lineNumber);                                     // error 4: procedure后应为标识符
                 }
                 if (sym.symtype == Symbol.SymbolType.semicolon.getIntValue())               //分号，表示<过程首部>结束
                 {
                     nextsym();
                 } else {
-                    err.outputErrMessage(5, lex.lineNumber);                                     //漏了逗号或者分号
+                    err.outputErrMessage(5, lex.lineNumber);                                     // error 5: 漏了逗号或者分号
                 }
                 nxtlev = (BitSet) fsys.clone();                      //当前模块(block)的FOLLOW集合
                 //FOLLOW(block)={ ; }
@@ -309,7 +320,7 @@ public class Parser {
      */
     void constdeclaration(int lev){
         if(sym.symtype == Symbol.SymbolType.ident.getIntValue()){    // const后面接ident
-            String id = sym.content;
+            String constName = sym.name;
             nextsym();
             if(sym.symtype == Symbol.SymbolType.eql.getIntValue() || sym.symtype == Symbol.SymbolType.becomes.getIntValue()){     // 等于或者赋值符号
                 if(sym.symtype == Symbol.SymbolType.becomes.getIntValue()){
@@ -317,21 +328,22 @@ public class Parser {
                 }
                 nextsym();                                    // 自动纠正，将:=纠错为=
                 if(sym.symtype == Symbol.SymbolType.number.getIntValue()){
-                    sym.content = id;
+                    sym.content = sym.name;
+                    sym.name = constName;
                     try {
                         table.enter(sym, SymbolTable.ItemKind.constant, lev, dx);       //将该常量输入符号表中
-                    } catch (Pl0Exception e) {
+                    } catch (PL0Exception e) {
                         err.outputErrMessage(e.errType, lex.lineNumber);
                         e.printStackTrace();
                     }
                 }else{
-                    err.outputErrMessage(2, lex.lineNumber);            // 常量=后应为数字
+                    err.outputErrMessage(2, lex.lineNumber);            // error 2: 常量=后应为数字
                 }
             } else{
-                err.outputErrMessage(3, lex.lineNumber);                // 常量说明符后应为=
+                err.outputErrMessage(3, lex.lineNumber);                // error 3: 常量说明符后应为=
             }
         }else{
-            err.outputErrMessage(4, lex.lineNumber);                    // const后应接标识符
+            err.outputErrMessage(4, lex.lineNumber);                    // error 4: const后应接标识符
         }
     }
 
@@ -348,7 +360,7 @@ public class Parser {
              */
             try {
                 table.enter(sym, SymbolTable.ItemKind.variable, lev, dx);
-            } catch (Pl0Exception e) {
+            } catch (PL0Exception e) {
                 err.outputErrMessage(e.errType, lex.lineNumber);
                 e.printStackTrace();
             }
@@ -414,7 +426,7 @@ public class Parser {
         if(sym.symtype == Symbol.SymbolType.untilsym.getIntValue()){     // 到了until
             nextsym();
             condition(fsys, lev);
-            interp.gen(Pcode.JPC, 0, cx1);                              // TODO cx1是什么东西
+            interp.gen(Pcode.JPC, 0, cx1);                              // TODO cx1是什么东西 以及JPC的条件跳转含义
         }else{
             err.outputErrMessage(32, lex.lineNumber);
         }
@@ -539,7 +551,7 @@ public class Parser {
     private void praseCallStatement(BitSet fsys, int lev) {
         nextsym();
         if (sym.symtype == Symbol.SymbolType.ident.getIntValue()) {              //检查符号表中该标识符是否已声明
-            int index = table.position(sym.content);
+            int index = table.position(sym.name);
             if (index != 0) {                                                    //若table中无此名字，返回0
                 SymbolTable.Item item = table.getItemAt(index);                  //获得名字表某一项的内容
                 if (item.kind == SymbolTable.ItemKind.procedure)                 //检查该标识符的类型是否为procedure
@@ -608,7 +620,7 @@ public class Parser {
                 nextsym();
                 if (sym.symtype == Symbol.SymbolType.ident.getIntValue()) //标识符
                 {
-                    index = table.position(sym.content);
+                    index = table.position(sym.name);
                 }
                 if (index == 0) {
                     err.outputErrMessage(11, lex.lineNumber);                              //error 11: 标识符未声明
@@ -650,7 +662,7 @@ public class Parser {
      */
     private void praseAssignStatement(BitSet fsys, int lev) {
         //从符号表中找到该标识符的信息
-        int index = table.position(sym.content);
+        int index = table.position(sym.name);
         if (index > 0) {
             SymbolTable.Item item = table.getItemAt(index);
             if (item.kind == SymbolTable.ItemKind.variable) {                            //标识符
@@ -757,7 +769,7 @@ public class Parser {
 
         if (facBegSyms.get(sym.symtype)) {
             if (sym.symtype == Symbol.SymbolType.ident.getIntValue()) {                            //因子为常量或变量或者过程名
-                int index = table.position(sym.content);
+                int index = table.position(sym.name);
                 if (index > 0) {                                               //大于0:找到，等于0:未找到
                     SymbolTable.Item item = table.getItemAt(index);
                                                                                 //如果这个标识符对应的是常量，值为val，生成lit指令，把val放到栈顶
@@ -773,7 +785,7 @@ public class Parser {
                 }
                 nextsym();
             } else if (sym.symtype == Symbol.SymbolType.number.getIntValue()) {               //因子为数
-                int num = Integer.parseInt(sym.content);
+                int num = Integer.parseInt(sym.name);
                 if (num > SymbolTable.addrMax) {                                   //数越界
                     err.outputErrMessage(34, lex.lineNumber);
                     num = 0;

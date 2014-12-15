@@ -1,5 +1,7 @@
 package pl0compiler;
 
+import jdk.internal.org.objectweb.asm.tree.LineNumberNode;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -16,10 +18,11 @@ import java.util.Arrays;
 public class Scanner {
 
     public final static int numMax = 14;        //数字的最大位数
-    String Buffer;
     public int positionInLine;
     public int lineNumber;
     public char ch;
+    private  boolean fileEneded;
+    String Buffer;
     private BufferedReader cin;
 
     public Scanner(String fileURL) {
@@ -29,19 +32,32 @@ public class Scanner {
             ex.printStackTrace();
             System.out.println("File not found!");
         }
+        fileEneded = false;
         Buffer = "";
         lineNumber = 0;
         positionInLine = 0;
     }
 
+    /**
+     * 读取一个字符，'\0'表示已读到文件末尾
+     * @return
+     */
     public char getch() {
+        if(fileEneded == true){
+            return ch = '\0';
+        }
         if (positionInLine == Buffer.length()) {
             try {
                 do {
                     Buffer = cin.readLine();
+                    if(Buffer == null){
+                        fileEneded = true;
+                        return ch = '\0';
+                    }
                     lineNumber++;
                     Buffer.trim();
-                    System.out.println(Buffer); // 把读入的源程序同时输出到output文件上
+                    PL0.runtimeWriter.write(lineNumber + " " + Buffer + "\n");
+                    PL0.runtimeWriter.flush();  // 把读入的源程序同时输出到output文件上
                 } while (Buffer.equals(""));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -50,11 +66,14 @@ public class Scanner {
             Buffer += " ";                     //  加一个空格表示到达行末尾，与下一行的开头分开
             positionInLine = 0;
         }
-        return ch = Buffer.charAt(positionInLine++);
+        if(positionInLine < Buffer.length())ch = Buffer.charAt(positionInLine++);
+        else ch = ' ';
+        return ch;
     }
 
     /**
      * 判断一个字符是否为数字
+     *
      * @param x
      * @return
      */
@@ -64,23 +83,30 @@ public class Scanner {
 
     /**
      * 判断一个字符是否为英文字母
+     *
      * @param x
      * @return
      */
     public boolean isAlpha(char x) {
-        return x >= 'a' && x <= 'z' && x >= 'A' && x <= 'Z';
+        return (x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z');
     }
 
     /**
-     * 返回一个单词（忽略空格）
+     * 返回下一个单词（忽略空格）
      *
+     * 如果碰到文件末尾则返回无法识别的符号
      * @return
      */
-    public Symbol getsym() throws Pl0Exception {
-        Symbol currentSym = null;
-        ch = getch();
+    public Symbol getsym() throws PL0Exception {
+        Symbol currentSym = new Symbol(Symbol.SymbolType.nul.getIntValue());
+        if(ch == '\0'){
+            return currentSym;
+        }
         while (ch == ' ') {
-            ch = getch();
+            getch();
+        }
+        if(ch == '\0'){
+            return currentSym;
         }
         if (isDigit(ch)) {
             currentSym = AnalysisNumber();
@@ -89,12 +115,15 @@ public class Scanner {
         } else {
             currentSym = AnalysisOperator();
         }
+        if(currentSym.symtype == Symbol.SymbolType.nul.getIntValue()){
+            System.out.println("fuck?");
+        }
         return currentSym;
     }
 
     /**
-     * 分析一个操作符
-     *
+     * 分析一个运算符
+     *  := | < | <= | <> | >= | > | SymbolTable中的单目运算符
      * @return
      */
     private Symbol AnalysisOperator() {
@@ -141,7 +170,7 @@ public class Scanner {
      *
      * @return
      */
-    private Symbol AnalysisWords(){
+    private Symbol AnalysisWords() {
         StringBuffer str = new StringBuffer();
         do {
             str.append(ch);
@@ -155,7 +184,7 @@ public class Scanner {
             sym = new Symbol(Symbol.usedWordsId[idx]);  // 保留字
         } else {
             sym = new Symbol(Symbol.SymbolType.ident.getIntValue());  // 一般标识符
-            sym.content = token;
+            sym.name = token;
         }
         return sym;
     }
@@ -163,18 +192,18 @@ public class Scanner {
     /**
      * 分析数字
      * 以String的形式存在sym.content里
-     * 不包含负数
+     * 不包含负数，只处理整数
      *
      * @return
      */
-    private Symbol AnalysisNumber() throws Pl0Exception {
+    private Symbol AnalysisNumber() throws PL0Exception {
         Symbol sym = new Symbol(Symbol.SymbolType.number.getIntValue());
         while (isDigit(ch)) {
-            sym.content += ch;
+            sym.name += ch;
             getch();
         }
-        if(sym.content.length() >= numMax){
-            throw new Pl0Exception(25);
+        if (sym.name.length() >= numMax) {
+            throw new PL0Exception(25);
         }
         return sym;
     }

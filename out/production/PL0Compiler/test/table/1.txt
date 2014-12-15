@@ -1,0 +1,3 @@
+**** Symbol Table ****
+   0  const: a  val: 45
+   1  const: b  val: 27

@@ -40,7 +40,7 @@ public class Interpreter {
             e.printStackTrace();
         }
         pcodeArray[arrayPtr++] = new Pcode(f, l, a);
-
+        listcode(arrayPtr-1);
     }
 
     /**
@@ -53,8 +53,9 @@ public class Interpreter {
             for (int i = start; i < arrayPtr; i++) {
                 try {
                     String msg = i + "  " + Pcode.pcode[pcodeArray[i].f] + "  " + pcodeArray[i].l + " " + pcodeArray[i].a;                //形如: lit l,a
-                    System.out.println(msg);
+                    //System.out.println(msg);
                     PL0.pcodeWriter.write(i + "  " + msg + '\n');
+                    PL0.pcodeWriter.flush();
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("***list pcode meet with error***");
@@ -74,7 +75,12 @@ public class Interpreter {
     public void interpret(BufferedReader stdin, BufferedWriter stdout) {
         int[] runtimeStack = new int[stackSize];                  // 程序运行栈
         Arrays.fill(runtimeStack, 0);                                   //初始化
-        System.out.println("***Start Interpret P_CODE***");
+        try {
+            PL0.pcodeWriter.write("***Start Interpret P_CODE***\n");
+            PL0.pcodeWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         int pc = 0, // pc:指令指针，
                 bp = 0, //bp:指令基址，
@@ -83,7 +89,14 @@ public class Interpreter {
         do {
 
             Pcode index = pcodeArray[pc++];// index :存放当前指令, 读当前指令
-            System.out.println(pc + "  " + Pcode.pcode[index.f] + " " + index.l + " " + index.a);
+            String pcode = pc + "  " + Pcode.pcode[index.f] + " " + index.l + " " + index.a;
+            try {
+                PL0.pcodeWriter.write(pcode+'\n');
+                PL0.pcodeWriter.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println(pcode);
             switch (index.f) {
                 case Pcode.LIT:                                                   // 将a的值取到栈顶
                     runtimeStack[sp++] = index.a;

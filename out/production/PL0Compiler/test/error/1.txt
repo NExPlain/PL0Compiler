@@ -1,0 +1,4 @@
+Error Message at  Line 1 : 7.应为语句
+Error Message at  Line 1 : 19.语句后的符号不正确
+Error Message at  Line 1 : 8.程序体内语句后的符号不正确
+Error Message at  Line 1 : 9.应为句号
