@@ -20,7 +20,7 @@ public class Pcode {
      * f的枚举类型
      */
     public static final int LIT = 0;            // LIT 0,a 将常量a放到数据栈栈顶
-    public static final int OPR = 1;            // OPR 0,a 执行运算，a表示执行何种运算 TODO a的具体表示
+    public static final int OPR = 1;            // OPR 0,a 执行运算，a表示执行何种运算
     public static final int LOD = 2;            // LOD 1,a 取变量（相对地址为a，层次差为1）放到数据栈栈顶
     public static final int STO = 3;            // STO 1,a 将数据栈栈顶内容存入变量（相对地址为a，层次差为1）
     public static final int CAL = 4;            // CAL 1,a 调用过程

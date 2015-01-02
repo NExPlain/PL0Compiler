@@ -1,7 +1,5 @@
 package pl0compiler;
 
-import jdk.internal.org.objectweb.asm.tree.LineNumberNode;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -18,7 +16,8 @@ import java.util.Arrays;
 public class Scanner {
 
     public final static int numMax = 14;        //数字的最大位数
-    public int positionInLine;
+    public final static int al = 10;            // maximum length of identifiers
+    public int cc;
     public int lineNumber;
     public char ch;
     private  boolean fileEneded;
@@ -35,38 +34,41 @@ public class Scanner {
         fileEneded = false;
         Buffer = "";
         lineNumber = 0;
-        positionInLine = 0;
+        cc = 0;
     }
 
     /**
      * 读取一个字符，'\0'表示已读到文件末尾
-     * @return
+     * @return 返回当前获取到的字符
      */
     public char getch() {
         if(fileEneded == true){
             return ch = '\0';
         }
-        if (positionInLine == Buffer.length()) {
+        if (cc == Buffer.length()) {
             try {
                 do {
                     Buffer = cin.readLine();
                     if(Buffer == null){
+                        Error.outputErrMessage(36, lineNumber);
+                        //PL0.outputWriter.write(cx1 + " " );
+                        //TODO cx是什么东西
                         fileEneded = true;
                         return ch = '\0';
                     }
                     lineNumber++;
-                    Buffer.trim();
-                    PL0.runtimeWriter.write(lineNumber + " " + Buffer + "\n");
-                    PL0.runtimeWriter.flush();  // 把读入的源程序同时输出到output文件上
+                    Buffer.trim();                                  // 去除多余的空格
+                    PL0.outputWriter.write("    " + Buffer + "\n");
+                    PL0.outputWriter.flush();                       // 把读入的源程序同时输出到output文件上
                 } while (Buffer.equals(""));
             } catch (IOException e) {
                 e.printStackTrace();
-                System.out.println("reading character error");
+                System.out.println("reading files error");
             }
             Buffer += " ";                     //  加一个空格表示到达行末尾，与下一行的开头分开
-            positionInLine = 0;
+            cc = 0;
         }
-        if(positionInLine < Buffer.length())ch = Buffer.charAt(positionInLine++);
+        if(cc < Buffer.length())ch = Buffer.charAt(cc++);
         else ch = ' ';
         return ch;
     }
@@ -98,10 +100,7 @@ public class Scanner {
      * @return
      */
     public Symbol getsym() throws PL0Exception {
-        Symbol currentSym = new Symbol(Symbol.SymbolType.nul.getIntValue());
-        if(ch == '\0'){
-            return currentSym;
-        }
+        Symbol currentSym = new Symbol(Symbol.SymbolType.nul.val());
         while (ch == ' ') {
             getch();
         }
@@ -109,14 +108,11 @@ public class Scanner {
             return currentSym;
         }
         if (isDigit(ch)) {
-            currentSym = AnalysisNumber();
+            currentSym = WorkNumber();
         } else if (isAlpha(ch)) {
-            currentSym = AnalysisWords();
+            currentSym = WorkReservedWords();
         } else {
-            currentSym = AnalysisOperator();
-        }
-        if(currentSym.symtype == Symbol.SymbolType.nul.getIntValue()){
-            System.out.println("fuck?");
+            currentSym = WorkOperator();
         }
         return currentSym;
     }
@@ -126,41 +122,46 @@ public class Scanner {
      *  := | < | <= | <> | >= | > | SymbolTable中的单目运算符
      * @return
      */
-    private Symbol AnalysisOperator() {
+    private Symbol WorkOperator() throws PL0Exception {
         Symbol sym = null;
         switch (ch) {
             case ':':
                 getch();
                 if (ch == '=') {
-                    sym = new Symbol(Symbol.SymbolType.becomes.getIntValue());
+                    sym = new Symbol(Symbol.SymbolType.becomes.val());
+                    getch();
                 } else {
-                    sym = new Symbol(Symbol.SymbolType.nul.getIntValue());
+                    sym = new Symbol(Symbol.SymbolType.nul.val());
                 }
                 break;
             case '<':
                 getch();
                 if (ch == '=') {
-                    sym = new Symbol(Symbol.SymbolType.leq.getIntValue());
+                    sym = new Symbol(Symbol.SymbolType.leq.val());
                     getch();
                 } else if (ch == '>') {
-                    sym = new Symbol(Symbol.SymbolType.neq.getIntValue());
+                    sym = new Symbol(Symbol.SymbolType.neq.val());
                     getch();
                 } else {
-                    sym = new Symbol(Symbol.SymbolType.lss.getIntValue());
+                    sym = new Symbol(Symbol.SymbolType.lss.val());
                 }
                 break;
             case '>':
                 getch();
                 if (ch == '=') {
-                    sym = new Symbol(Symbol.SymbolType.geq.getIntValue());
+                    sym = new Symbol(Symbol.SymbolType.geq.val());
                     getch();
                 } else {
-                    sym = new Symbol(Symbol.SymbolType.gtr.getIntValue());
+                    sym = new Symbol(Symbol.SymbolType.gtr.val());
                 }
                 break;
             default:
-                sym = new Symbol(Symbol.operatorToIdx.get(ch));
-                getch();
+                if(Symbol.operatorToIdx.containsKey(ch)) {
+                    sym = new Symbol(Symbol.operatorToIdx.get(ch));
+                    getch();
+                }
+                else
+                    throw new PL0Exception(37);
         }
         return sym;
     }
@@ -170,20 +171,21 @@ public class Scanner {
      *
      * @return
      */
-    private Symbol AnalysisWords() {
+    private Symbol WorkReservedWords() {
         StringBuffer str = new StringBuffer();
         do {
-            str.append(ch);
+            if(str.length() < al)           // if the length of token haven't reach the max
+                str.append(ch);
             getch();
         } while (isDigit(ch) || isAlpha(ch));
-
         String token = str.toString();
-        int idx = Arrays.binarySearch(Symbol.usedWords, token);
+
+        int idx = Arrays.binarySearch(Symbol.usedWords, token);             // TODO extends change to HashTable?
         Symbol sym;
         if (idx >= 0) {
             sym = new Symbol(Symbol.usedWordsId[idx]);  // 保留字
         } else {
-            sym = new Symbol(Symbol.SymbolType.ident.getIntValue());  // 一般标识符
+            sym = new Symbol(Symbol.SymbolType.ident.val());  // 一般标识符
             sym.name = token;
         }
         return sym;
@@ -196,8 +198,8 @@ public class Scanner {
      *
      * @return
      */
-    private Symbol AnalysisNumber() throws PL0Exception {
-        Symbol sym = new Symbol(Symbol.SymbolType.number.getIntValue());
+    private Symbol WorkNumber() throws PL0Exception {
+        Symbol sym = new Symbol(Symbol.SymbolType.number.val());
         while (isDigit(ch)) {
             sym.name += ch;
             getch();

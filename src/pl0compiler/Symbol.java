@@ -11,22 +11,22 @@ public class Symbol {
     public static final int symbolNumber = 35;
     // 保留字对应的符号值
     public static final int[] usedWordsId = new int[]{
-            SymbolType.beginsym.getIntValue(),
-            SymbolType.callsym.getIntValue(),
-            SymbolType.constsym.getIntValue(),
-            SymbolType.dosym.getIntValue(),
-            SymbolType.elsesym.getIntValue(),
-            SymbolType.endsym.getIntValue(),
-            SymbolType.ifsym.getIntValue(),
-            SymbolType.oddsym.getIntValue(),
-            SymbolType.procsym.getIntValue(),
-            SymbolType.readsym.getIntValue(),
-            SymbolType.repeatsym.getIntValue(),
-            SymbolType.thensym.getIntValue(),
-            SymbolType.untilsym.getIntValue(),
-            SymbolType.varsym.getIntValue(),
-            SymbolType.whilesym.getIntValue(),
-            SymbolType.writesym.getIntValue()
+            SymbolType.beginsym.val(),
+            SymbolType.callsym.val(),
+            SymbolType.constsym.val(),
+            SymbolType.dosym.val(),
+            SymbolType.elsesym.val(),
+            SymbolType.endsym.val(),
+            SymbolType.ifsym.val(),
+            SymbolType.oddsym.val(),
+            SymbolType.procsym.val(),
+            SymbolType.readsym.val(),
+            SymbolType.repeatsym.val(),
+            SymbolType.thensym.val(),
+            SymbolType.untilsym.val(),
+            SymbolType.varsym.val(),
+            SymbolType.whilesym.val(),
+            SymbolType.writesym.val()
     };
 
     // 保留字名字的存放(排序后)
@@ -40,16 +40,16 @@ public class Symbol {
 
     static {
         operatorToIdx = new HashMap<Character, Integer>();
-        operatorToIdx.put('+', SymbolType.plus.getIntValue());
-        operatorToIdx.put('-', SymbolType.minus.getIntValue());
-        operatorToIdx.put('*', SymbolType.times.getIntValue());
-        operatorToIdx.put('/', SymbolType.slash.getIntValue());
-        operatorToIdx.put('(', SymbolType.lparen.getIntValue());
-        operatorToIdx.put(')', SymbolType.rparen.getIntValue());
-        operatorToIdx.put('=', SymbolType.eql.getIntValue());
-        operatorToIdx.put(',', SymbolType.comma.getIntValue());
-        operatorToIdx.put('.', SymbolType.period.getIntValue());
-        operatorToIdx.put(';', SymbolType.semicolon.getIntValue());
+        operatorToIdx.put('+', SymbolType.plus.val());
+        operatorToIdx.put('-', SymbolType.minus.val());
+        operatorToIdx.put('*', SymbolType.times.val());
+        operatorToIdx.put('/', SymbolType.slash.val());
+        operatorToIdx.put('(', SymbolType.lparen.val());
+        operatorToIdx.put(')', SymbolType.rparen.val());
+        operatorToIdx.put('=', SymbolType.eql.val());
+        operatorToIdx.put(',', SymbolType.comma.val());
+        operatorToIdx.put('.', SymbolType.period.val());
+        operatorToIdx.put(';', SymbolType.semicolon.val());
     }
 
     public String name;
@@ -142,7 +142,7 @@ public class Symbol {
             this.enumValue = _enumValue;
         }
 
-        public int getIntValue() {
+        public int val() {
             return enumValue;
         }
     }

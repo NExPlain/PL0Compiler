@@ -17,44 +17,44 @@ public class SymbolTable {
     public static final int addrMax = 1000000;      // 最大允许的数值
     private boolean debugging = true;
 
-    public Item[] tab;// 栈式符号表
+    public record[] tab;// 栈式符号表
 
     public SymbolTable(){
         tablePtr = 0;
-        tab = new Item[MaxTableSize];
+        tab = new record[MaxTableSize];
     }
-    public static enum ItemKind {
+    public static enum Kind {
         constant(0),
         variable(1),
         procedure(2);
 
         private int enumValue;
 
-        private ItemKind(int enumValue) {
+        private Kind(int enumValue) {
             this.enumValue = enumValue;
         }
 
-        public int getIntValue() {
+        public int val() {
             return enumValue;
         }
     }
 
-    public class Item {
+    public class record {
         String name;            // 名字
-        ItemKind kind;          // 种类(constant, variable, procedure)
+        Kind kind;          // 种类(constant, variable, procedure)
         int value;                // 值，当kind为常量时
         int level;              // 嵌套层次
         int addr;               // 地址，当kind为常量或过程时
         int size;               // 该item的大小
 
-        public Item(String name, ItemKind kind, int value, int level, int addr) {
+        public record(String name, Kind kind, int value, int level, int addr) {
             this.name = name;
             this.kind = kind;
             this.value = value;
             this.level = level;
             this.addr = addr;
         }
-        public Item(){
+        public record(){
             name = "";
         }
         public void reDirectAddr(int addr) {
@@ -68,14 +68,14 @@ public class SymbolTable {
      * @param idx 要访问的符号表对象的对应标号
      * @return 返回位置为idx的Item
      */
-    public Item getItemAt(int idx) {
-        if (idx >= MaxTableSize || idx < 0)
+    public record getItemAt(int idx) {
+        if (idx > MaxTableSize || idx < 0)
             try {
-                throw new Exception("***Access Violation in Symbol Table.***");
+                throw new Exception("****Access Violation in Symbol Table.");
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        if(tab[idx] == null)tab[idx] = new Item();
+        if(tab[idx] == null)tab[idx] = new record();
         return tab[idx];
     }
 
@@ -88,7 +88,8 @@ public class SymbolTable {
      */
     public int position(String s) {
         try {
-            for (int i = tablePtr - 1; i >= 0; i--) {
+            tab[0].name = s;
+            for (int i = tablePtr; i >= 0; i--) {
                 if (getItemAt(i).name.equals(s)) {
                     return i;
                 }
@@ -96,7 +97,7 @@ public class SymbolTable {
         }catch (Exception e){
             System.out.println(e.getMessage());
         }
-        return -1;
+        return 0;
     }
 
     /**
@@ -109,39 +110,36 @@ public class SymbolTable {
      * @return
      * @throws Exception
      */
-    public void enter(Symbol sym, ItemKind kind, int level, int dx) throws PL0Exception {
+    public void enter(Symbol sym, Kind kind, int level, Integer dx) throws PL0Exception {
         if (tablePtr == MaxTableSize){
-            try {
-                throw new Exception("符号表溢出错误！");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            throw new PL0Exception(39);     // 符号表溢出
         }
-        for(int i = tablePtr-1 ; i >= 0 ; i --){
+        for(int i = tablePtr ; i > 0 ; i --){
             if(tab[i].level != level)break;
             if(tab[i].name == sym.name){
                 throw new PL0Exception(29);
             }
         }
-        Item item = new Item();
-        item.name = sym.name;
-        item.kind = kind;
-        if(kind.getIntValue() == ItemKind.constant.getIntValue()){          // 常量名
-            item.value = Integer.parseInt(sym.content);                        // const 变量不需要level
-        }else if(kind.getIntValue() == ItemKind.variable.getIntValue()){    // 变量
-            item.level = level;
-            item.addr = dx;                                                 // 相对此过程的偏移量
-        }else if(kind.getIntValue() == ItemKind.procedure.getIntValue()){   // 过程名
-            item.level = level;
-            item.addr = 0;                                                 // TODO 过程的addr需要设定为pcode指令序列的入口地址
+        record record = new record();
+        record.name = sym.name;
+        record.kind = kind;
+        if(kind.val() == Kind.constant.val()){          // 常量
+            record.value = Integer.parseInt(sym.content);                        // const 变量不需要level
+        }else if(kind.val() == Kind.variable.val()){    // 变量
+            record.level = level;
+            record.addr = dx;                                                 // 相对此过程的偏移量
+            dx = dx + 1;                                                      // TODO 确认向外传递dx的变化
+        }else if(kind.val() == Kind.procedure.val()){   // 过程名
+            record.level = level;
+            record.addr = 0;
         }else{
             try {
-                throw new Exception("Unknow Item kind in the SymbolTable");
+                throw new Exception("Unknow Item kind in the SymbolTable!!!!");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        tab[tablePtr++] = item;
+        tab[++tablePtr] = record;
     }
 
 
@@ -167,11 +165,11 @@ public class SymbolTable {
         for (int i = start; i < tablePtr; i++) {
             try {
                 String msg = "unknown table item !";
-                if(tab[i].kind == ItemKind.constant){
+                if(tab[i].kind == Kind.constant){
                     msg = "   " + i + "  const: " + tab[i].name + "  val: " + tab[i].value;
-                }else if(tab[i].kind == ItemKind.variable){
+                }else if(tab[i].kind == Kind.variable){
                     msg = "    " + i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  addr: " + tab[i].addr;
-                }else if(tab[i].kind == ItemKind.procedure){
+                }else if(tab[i].kind == Kind.procedure){
                     msg = "    " + i + " proc: " + tab[i].name + "  lev: " + tab[i].level + "  addr: " + tab[i].size;
                 }
                 System.out.println(msg);

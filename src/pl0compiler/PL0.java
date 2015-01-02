@@ -1,7 +1,5 @@
 package pl0compiler;
 
-import sun.jvm.hotspot.debugger.Debugger;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
@@ -13,14 +11,15 @@ public class PL0 {
     public static final String errFile = "./src/test/error/1.txt";
     public static final String inputFile="./src/test/input/1.txt";
     public static BufferedWriter pcodeWriter;                   //输出虚拟机代码
-    public static BufferedWriter runtimeWriter;                 //输出结果
+    public static BufferedWriter outputWriter;                 //输出结果
     public static BufferedWriter tableWriter;                   //输出名字表
     public static BufferedWriter errWriter;                     //输出错误信息
 
     public static Parser praser;
+    public static Scanner scan;
 
     public PL0(String filepath) {
-        Scanner scan = new Scanner(filepath);
+        scan = new Scanner(filepath);
         praser = new Parser(scan,                               //词法分析器
                 new SymbolTable(),                              //名字表
                 new Interpreter());
@@ -30,14 +29,14 @@ public class PL0 {
         try {
             pcodeWriter = new BufferedWriter(new FileWriter(pcodeFile));
             tableWriter = new BufferedWriter(new FileWriter(tableFile));
-            runtimeWriter = new BufferedWriter(new FileWriter(runtimeFile));
+            outputWriter = new BufferedWriter(new FileWriter(runtimeFile));
             errWriter = new BufferedWriter(new FileWriter(errFile));
             praser.lex.getch();
-            praser.nextsym();                                      //前瞻分析需要预先读入一个符号
+            praser.getsym();                                      //前瞻分析需要预先读入一个符号
             praser.parse();                                        //开始语法分析过程（连同语法检查，目标代码生成）
             pcodeWriter.close();
             tableWriter.close();
-            runtimeWriter.close();
+            outputWriter.close();
             errWriter.close();
         } catch (Exception e) {
             e.printStackTrace();

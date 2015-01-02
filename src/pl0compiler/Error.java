@@ -45,12 +45,33 @@ public class Error {
             "28.标识符定义不正确：包含不合法符号",
             "29.重复声明变量",
             "30.递归层数超过限制",
-            "31. 嵌套层数过高，应在[1,3]范围内",
-            "32. repeat后没有until",
-            "33. read语句中需要是变量",
-            "34. 超过符号表大小限制",
-            "35. 无法识别的标识符"
+            "31.嵌套层数过高，应在[1,3]范围内",
+            "32.repeat后没有until",
+            "33.read语句中需要是变量",
+            "34.超过符号表大小限制",
+            "35.无法识别的标识符",
+            "36.程序不完整(program incomplete)",
+            "37.无法识别的字符",
+            "38.程序过长(program too long)",
+            "39.符号表溢出错误",
         };
+
+    public static void outputErrMessage(int errID, int lineNumber, int cc){
+        String errMessage = "****";
+        for(int i = 0 ; i < cc-1 ; i ++){
+            errMessage += ' ';
+        }
+        errMessage += "^" + errorInfo[errID];
+        try {
+            PL0.outputWriter.write(errMessage + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        errCnt ++ ;
+        outputErrMessage(errID, lineNumber);
+    }
+
+
     public static void outputErrMessage(int errID, int lineNumber){
         String errMessage = "Error Message at " + " Line " + lineNumber + " : " + errorInfo[errID];
         try {
@@ -59,8 +80,8 @@ public class Error {
             e.printStackTrace();
         }
         System.out.println(errMessage);
-        errCnt ++ ;
     }
+
     public static void debugging(Symbol sym){
         System.out.println(Symbol.SymbolTypeName[sym.symtype]);
     }

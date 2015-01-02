@@ -12,16 +12,19 @@ public class Interpreter {
     //运行栈上限
     private static final int stackSize = 1000;
     //pcode数组上线
-    private static final int arraySize = 500;
-    //虚拟机代码指针，取值范围[0,arraySize-1]
-    public int arrayPtr = 0;
+    private static final int cxmax = 500;
+    //虚拟机代码指针，存放数据范围[0,cx1-1]
+    public int cx1 = 0;
+    public int cx0 = 0;                                         // cx0是什么？
     //存放虚拟机代码的数组
-    public Pcode[] pcodeArray;
+    public Pcode[] code;
     //显示虚拟代码与否
     public static boolean listswitch = true;
 
+
     public Interpreter() {
-        pcodeArray = new Pcode[arraySize];
+        code = new Pcode[cxmax];
+        cx0 = cx1 = 0;
     }
 
     /**
@@ -31,36 +34,29 @@ public class Interpreter {
      * @param l Pcodeuction.l
      * @param a Pcodeuction.a
      */
-    public void gen(int f, int l, int a)  {
-        try {
-            if (arrayPtr >= arraySize) {                                                                          //超出堆栈的上限
-                throw new Exception("***ERROR:Program too long***");
-            }
-        }catch (Exception e){
-            e.printStackTrace();
+    public void gen(int f, int l, int a) throws PL0Exception {
+        if (cx1 >= cxmax) {                                                                          //超出堆栈的上限
+            throw new PL0Exception(38);
         }
-        pcodeArray[arrayPtr++] = new Pcode(f, l, a);
-        listcode(arrayPtr-1);
+        code[cx1++] = new Pcode(f, l, a);
     }
 
+
     /**
-     * 输出目标代码清单
-     *
-     * @param start 开始输出的位置
+     * 输出pcode符号表
      */
-    public void listcode(int start) {
+    public void listcode() {
         if (listswitch) {                                                                         //是否显示P-code代码
-            for (int i = start; i < arrayPtr; i++) {
+            for (int i = cx0; i < cx1; i++) {
                 try {
-                    String msg = i + "  " + Pcode.pcode[pcodeArray[i].f] + "  " + pcodeArray[i].l + " " + pcodeArray[i].a;                //形如: lit l,a
+                    String msg = i + "  " + Pcode.pcode[code[i].f] + "  " + code[i].l + " " + code[i].a;                //形如: lit l,a
                     //System.out.println(msg);
-                    PL0.pcodeWriter.write(i + "  " + msg + '\n');
+                    PL0.pcodeWriter.write(msg + '\n');
                     PL0.pcodeWriter.flush();
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("***list pcode meet with error***");
                 }
-
             }
         }
     }
@@ -88,7 +84,7 @@ public class Interpreter {
 
         do {
 
-            Pcode index = pcodeArray[pc++];// index :存放当前指令, 读当前指令
+            Pcode index = code[pc++];// index :存放当前指令, 读当前指令
             String pcode = pc + "  " + Pcode.pcode[index.f] + " " + index.l + " " + index.a;
             try {
                 PL0.pcodeWriter.write(pcode+'\n');
@@ -247,8 +243,8 @@ public class Interpreter {
     public void debugPcodeArray() throws IOException {
         System.out.println("***Auto-Generated Pcode Array***");
         String msg = null;
-        for (int i = 0; pcodeArray[i] != null; i++) {
-            msg = "" + i + "  " + Pcode.pcode[pcodeArray[i].f] + "  " + pcodeArray[i].l + "  " + pcodeArray[i].a;
+        for (int i = 0; code[i] != null; i++) {
+            msg = "" + i + "  " + Pcode.pcode[code[i].f] + "  " + code[i].l + "  " + code[i].a;
             System.out.println(msg);
             PL0.pcodeWriter.write(msg + '\n');
         }
