@@ -10,7 +10,7 @@ public class SymbolTable {
     /**
      * 当前符号表指针
      */
-    public int tablePtr = 0;
+    public int tx = 0;
 
     private static final int MaxTableSize = 1000;
     public static final int levMax = 3;
@@ -20,7 +20,7 @@ public class SymbolTable {
     public record[] tab;// 栈式符号表
 
     public SymbolTable(){
-        tablePtr = 0;
+        tx = 0;
         tab = new record[MaxTableSize];
     }
     public static enum Kind {
@@ -89,7 +89,7 @@ public class SymbolTable {
     public int position(String s) {
         try {
             tab[0].name = s;
-            for (int i = tablePtr; i >= 0; i--) {
+            for (int i = tx; i >= 0; i--) {
                 if (at(i).name.equals(s)) {
                     return i;
                 }
@@ -111,10 +111,10 @@ public class SymbolTable {
      * @throws Exception
      */
     public void enter(Symbol sym, Kind kind, int level, Integer dx) throws PL0Exception {
-        if (tablePtr == MaxTableSize){
+        if (tx == MaxTableSize){
             throw new PL0Exception(39);     // 符号表溢出
         }
-        for(int i = tablePtr ; i > 0 ; i --){
+        for(int i = tx; i > 0 ; i --){
             if(tab[i].level != level)break;
             if(tab[i].name == sym.name){
                 throw new PL0Exception(29);
@@ -139,7 +139,7 @@ public class SymbolTable {
                 e.printStackTrace();
             }
         }
-        tab[++tablePtr] = record;
+        tab[++tx] = record;
     }
 
 
@@ -159,10 +159,10 @@ public class SymbolTable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (start > tablePtr) {
+        if (start > tx) {
             System.out.println("  NULL");
         }
-        for (int i = start; i < tablePtr; i++) {
+        for (int i = start; i < tx; i++) {
             try {
                 String msg = "unknown table item !";
                 if(tab[i].kind == Kind.constant){

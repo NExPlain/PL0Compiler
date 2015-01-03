@@ -1,5 +1,6 @@
 package pl0compiler;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
@@ -33,7 +34,7 @@ public class PL0 {
             errWriter = new BufferedWriter(new FileWriter(errFile));
             praser.lex.getch();
             praser.getsym();                                      //前瞻分析需要预先读入一个符号
-            praser.parse();                                        //开始语法分析过程（连同语法检查，目标代码生成）
+            praser.start();                                        //开始语法分析过程（连同语法检查，目标代码生成）
             pcodeWriter.close();
             tableWriter.close();
             outputWriter.close();
@@ -46,6 +47,9 @@ public class PL0 {
         }
         System.out.println("compile completed");
         //编译成功是指完成编译过程并且没有错误
+        if(praser.err.errCnt == 0){
+            praser.interp.interpret(System.in, System.out);
+        }
         return (praser.err.errCnt == 0);
     }
 }

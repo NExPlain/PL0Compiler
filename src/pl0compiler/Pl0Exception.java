@@ -9,4 +9,10 @@ public class PL0Exception extends Exception{
         super();
         this.errType = errType;
     }
+    public static void handle(int errType, Error err, Scanner lex){
+        err.outputErrMessage(errType, lex.lineNumber, lex.cc);
+    }
+    void handle(Error err, Scanner lex){
+        err.outputErrMessage(errType, lex.lineNumber, lex.cc);
+    }
 }

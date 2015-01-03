@@ -51,7 +51,7 @@ public class Scanner {
                     Buffer = cin.readLine();
                     if(Buffer == null){
                         Error.outputErrMessage(36, lineNumber);
-                        //PL0.outputWriter.write(cx1 + " " );
+                        //PL0.outputWriter.write(cx + " " );
                         //TODO cx是什么东西
                         fileEneded = true;
                         return ch = '\0';
