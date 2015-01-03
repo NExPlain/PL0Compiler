@@ -100,7 +100,7 @@ public class Scanner {
      * @return
      */
     public Symbol getsym() throws PL0Exception {
-        Symbol currentSym = new Symbol(Symbol.SymbolType.nul.val());
+        Symbol currentSym = new Symbol(Symbol.type.nul.val());
         while (ch == ' ') {
             getch();
         }
@@ -128,31 +128,31 @@ public class Scanner {
             case ':':
                 getch();
                 if (ch == '=') {
-                    sym = new Symbol(Symbol.SymbolType.becomes.val());
+                    sym = new Symbol(Symbol.type.becomes.val());
                     getch();
                 } else {
-                    sym = new Symbol(Symbol.SymbolType.nul.val());
+                    sym = new Symbol(Symbol.type.nul.val());
                 }
                 break;
             case '<':
                 getch();
                 if (ch == '=') {
-                    sym = new Symbol(Symbol.SymbolType.leq.val());
+                    sym = new Symbol(Symbol.type.leq.val());
                     getch();
                 } else if (ch == '>') {
-                    sym = new Symbol(Symbol.SymbolType.neq.val());
+                    sym = new Symbol(Symbol.type.neq.val());
                     getch();
                 } else {
-                    sym = new Symbol(Symbol.SymbolType.lss.val());
+                    sym = new Symbol(Symbol.type.lss.val());
                 }
                 break;
             case '>':
                 getch();
                 if (ch == '=') {
-                    sym = new Symbol(Symbol.SymbolType.geq.val());
+                    sym = new Symbol(Symbol.type.geq.val());
                     getch();
                 } else {
-                    sym = new Symbol(Symbol.SymbolType.gtr.val());
+                    sym = new Symbol(Symbol.type.gtr.val());
                 }
                 break;
             default:
@@ -185,7 +185,7 @@ public class Scanner {
         if (idx >= 0) {
             sym = new Symbol(Symbol.usedWordsId[idx]);  // 保留字
         } else {
-            sym = new Symbol(Symbol.SymbolType.ident.val());  // 一般标识符
+            sym = new Symbol(Symbol.type.ident.val());  // 一般标识符
             sym.name = token;
         }
         return sym;
@@ -199,12 +199,13 @@ public class Scanner {
      * @return
      */
     private Symbol WorkNumber() throws PL0Exception {
-        Symbol sym = new Symbol(Symbol.SymbolType.number.val());
+        Symbol sym = new Symbol(Symbol.type.number.val());
         while (isDigit(ch)) {
             sym.name += ch;
             getch();
         }
         if (sym.name.length() >= numMax) {
+            sym.name = "0";
             throw new PL0Exception(25);
         }
         return sym;

@@ -68,7 +68,7 @@ public class SymbolTable {
      * @param idx 要访问的符号表对象的对应标号
      * @return 返回位置为idx的Item
      */
-    public record getItemAt(int idx) {
+    public record at(int idx) {
         if (idx > MaxTableSize || idx < 0)
             try {
                 throw new Exception("****Access Violation in Symbol Table.");
@@ -90,7 +90,7 @@ public class SymbolTable {
         try {
             tab[0].name = s;
             for (int i = tablePtr; i >= 0; i--) {
-                if (getItemAt(i).name.equals(s)) {
+                if (at(i).name.equals(s)) {
                     return i;
                 }
             }

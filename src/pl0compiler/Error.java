@@ -1,7 +1,5 @@
 package pl0compiler;
 
-import sun.util.resources.th.CalendarData_th;
-
 import java.io.IOException;
 
 /**
@@ -48,7 +46,7 @@ public class Error {
             "31.嵌套层数过高，应在[1,3]范围内",
             "32.repeat后没有until",
             "33.read语句中需要是变量",
-            "34.超过符号表大小限制",
+            "34.这个数太大",
             "35.无法识别的标识符",
             "36.程序不完整(program incomplete)",
             "37.无法识别的字符",
@@ -83,6 +81,6 @@ public class Error {
     }
 
     public static void debugging(Symbol sym){
-        System.out.println(Symbol.SymbolTypeName[sym.symtype]);
+        System.out.println(Symbol.typeName[sym.symtype]);
     }
 }

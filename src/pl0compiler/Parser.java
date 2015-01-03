@@ -26,7 +26,7 @@ public class Parser {
     /**
      * 因子开始的First符号集合
      */
-    private BitSet facBegSyms;
+    private BitSet facbegSyms;
 
     /**
      * 当前作用域的堆栈帧大小，或者说是数据大小
@@ -51,9 +51,9 @@ public class Parser {
          * FIRST(declaration)={const var procedure null };
          */
         declBegSyms = new BitSet(Symbol.symbolNumber);
-        declBegSyms.set(Symbol.SymbolType.constsym.val());
-        declBegSyms.set(Symbol.SymbolType.varsym.val());
-        declBegSyms.set(Symbol.SymbolType.procsym.val());
+        declBegSyms.set(Symbol.type.constsym.val());
+        declBegSyms.set(Symbol.type.varsym.val());
+        declBegSyms.set(Symbol.type.procsym.val());
 
         /**
          * 设置语句开始符号集
@@ -67,21 +67,21 @@ public class Parser {
          * FIRST(statement)={begin call if while repeat null };
          */
         stateBegSyms = new BitSet(Symbol.symbolNumber);
-        stateBegSyms.set(Symbol.SymbolType.beginsym.val());
-        stateBegSyms.set(Symbol.SymbolType.callsym.val());
-        stateBegSyms.set(Symbol.SymbolType.whilesym.val());
-        stateBegSyms.set(Symbol.SymbolType.ifsym.val());
-        stateBegSyms.set(Symbol.SymbolType.repeatsym.val());
+        stateBegSyms.set(Symbol.type.beginsym.val());
+        stateBegSyms.set(Symbol.type.callsym.val());
+        stateBegSyms.set(Symbol.type.whilesym.val());
+        stateBegSyms.set(Symbol.type.ifsym.val());
+        stateBegSyms.set(Symbol.type.repeatsym.val());
 
         /**
          * 设置因子开始符号集
          * <因子> ::= <标识符>|<无符号整数>|'('<表达式>')'
          * FIRST(factor)={ident,number,( };
          */
-        facBegSyms = new BitSet(Symbol.symbolNumber);
-        facBegSyms.set(Symbol.SymbolType.ident.val());
-        facBegSyms.set(Symbol.SymbolType.number.val());
-        facBegSyms.set(Symbol.SymbolType.lparen.val());
+        facbegSyms = new BitSet(Symbol.symbolNumber);
+        facbegSyms.set(Symbol.type.ident.val());
+        facbegSyms.set(Symbol.type.number.val());
+        facbegSyms.set(Symbol.type.lparen.val());
     }
 
     /**
@@ -91,7 +91,7 @@ public class Parser {
         try {
             sym = lex.getsym();
         } catch (PL0Exception e) {
-            sym = new Symbol(Symbol.SymbolType.nul.val());
+            sym = new Symbol(Symbol.type.nul.val());
             err.outputErrMessage(e.errType, lex.lineNumber);
         }
     }
@@ -122,11 +122,11 @@ public class Parser {
         BitSet fsys = new BitSet(Symbol.symbolNumber);
         fsys.or(declBegSyms);                                         // 可以是声明开头
         fsys.or(stateBegSyms);                                        // 可以是语句开头
-        fsys.set(Symbol.SymbolType.period.val());
+        fsys.set(Symbol.type.period.val());
 
         block(0, fsys);                                               // 解析<分程序>
 
-        if(sym.symtype != Symbol.SymbolType.period.val()){
+        if(sym.symtype != Symbol.type.period.val()){
             err.outputErrMessage(9, lex.lineNumber);
         }
     }
@@ -153,7 +153,7 @@ public class Parser {
         dx = 3;
 
         //当前pcode代码的地址，传给当前符号表的addr项（第几条pcode代码）
-        table.getItemAt(table.tablePtr).addr = interp.cx1;                                 //在符号表的当前位置tablePtr记录下这个jmp指令在代码段中的位置(即arrayPtr)
+        table.at(table.tablePtr).addr = interp.cx1;                                 //在符号表的当前位置tablePtr记录下这个jmp指令在代码段中的位置(即arrayPtr)
         interp.gen(Pcode.JMP, 0, 0);                                                            //JMP 0 0 TODO 不确定是否应是0 0
 
         if (lev > SymbolTable.levMax) //必须先判断嵌套层层数
@@ -163,18 +163,18 @@ public class Parser {
         do {
             //分析<说明部分>
             //<常量说明部分> ::= const<常量定义>{,<常量定义>};
-            if (sym.symtype == Symbol.SymbolType.constsym.val()) {                 //例如const a=0,b=0,... ...,z=0;
+            if (sym.symtype == Symbol.type.constsym.val()) {                 //例如const a=0,b=0,... ...,z=0;
                 getsym();
                 constdeclaration(lev);                                                     //分析<常量定义>
                 getsym();
                 System.out.println("fucking shit");
-                while (sym.symtype == Symbol.SymbolType.comma.val()) {
+                while (sym.symtype == Symbol.type.comma.val()) {
                     getsym();
                     constdeclaration(lev);
                     System.out.println("fucking shit");
                     getsym();
                 }
-                if (sym.symtype == Symbol.SymbolType.semicolon.val())                   //如果是分号，表示常量申明结束
+                if (sym.symtype == Symbol.type.semicolon.val())                   //如果是分号，表示常量申明结束
                 {
                     getsym();
                 } else {
@@ -184,14 +184,14 @@ public class Parser {
             }
             //分析<变量说明>
             //var<标识符>{,<标识符>};
-            if (sym.symtype == Symbol.SymbolType.varsym.val()) {                       //读入的数为var
+            if (sym.symtype == Symbol.type.varsym.val()) {                       //读入的数为var
                 getsym();
                 vardeclaration(lev);                                                        //识别<标识符>
-                while (sym.symtype == Symbol.SymbolType.comma.val()) {              //识别{,<标识符>}
+                while (sym.symtype == Symbol.type.comma.val()) {              //识别{,<标识符>}
                     getsym();
                     vardeclaration(lev);
                 }
-                if (sym.symtype == Symbol.SymbolType.semicolon.val()) //如果是分号，表示变量申明结束
+                if (sym.symtype == Symbol.type.semicolon.val()) //如果是分号，表示变量申明结束
                 {
                     getsym();
                 } else {
@@ -204,9 +204,9 @@ public class Parser {
              * FOLLOW(semicolon)={NULL<过程首部>}，
              * 需要进行test procedure a1; procedure 允许嵌套，故用while
              */
-            while (sym.symtype == Symbol.SymbolType.procsym.val()) {                 //如果是procedure
+            while (sym.symtype == Symbol.type.procsym.val()) {                 //如果是procedure
                 getsym();
-                if (sym.symtype == Symbol.SymbolType.ident.val()) {                      //填写符号表
+                if (sym.symtype == Symbol.type.ident.val()) {                      //填写符号表
                     try {
                         table.enter(sym, SymbolTable.Kind.procedure, lev, dx);                                             //当前作用域的大小
                     }catch (PL0Exception e){
@@ -216,7 +216,7 @@ public class Parser {
                 } else {
                     err.outputErrMessage(4, lex.lineNumber);                                     // error 4: procedure后应为标识符
                 }
-                if (sym.symtype == Symbol.SymbolType.semicolon.val())               //分号，表示<过程首部>结束
+                if (sym.symtype == Symbol.type.semicolon.val())               //分号，表示<过程首部>结束
                 {
                     getsym();
                 } else {
@@ -224,17 +224,17 @@ public class Parser {
                 }
                 nxtlev = (BitSet) fsys.clone();                      //当前模块(block)的FOLLOW集合
                 //FOLLOW(block)={ ; }
-                nxtlev.set(Symbol.SymbolType.semicolon.val());
+                nxtlev.set(Symbol.type.semicolon.val());
                 block(lev + 1, nxtlev);                                  //嵌套层次+1，分析分程序
 
-                if (sym.symtype == Symbol.SymbolType.semicolon.val()) {                          //<过程说明部分> 识别成功
+                if (sym.symtype == Symbol.type.semicolon.val()) {                          //<过程说明部分> 识别成功
 
                     getsym();
                     //FIRST(statement)={begin call if while repeat null };
                     nxtlev = (BitSet) stateBegSyms.clone();                     //语句的FIRST集合
                     //FOLLOW(嵌套分程序)={ ident , procedure }   TODO 为啥有ident?
-                    nxtlev.set(Symbol.SymbolType.ident.val());
-                    nxtlev.set(Symbol.SymbolType.procsym.val());
+                    nxtlev.set(Symbol.type.ident.val());
+                    nxtlev.set(Symbol.type.procsym.val());
                     test(nxtlev, fsys, 6);                             // 测试symtype属于FIRST(statement),
                     //6:过程说明后的符号不正确
                 } else {
@@ -249,7 +249,7 @@ public class Parser {
              */
             nxtlev = (BitSet) stateBegSyms.clone();
             //FIRST(statement)={ ident }
-            nxtlev.set(Symbol.SymbolType.ident.val());
+            nxtlev.set(Symbol.type.ident.val());
             test(nxtlev, declBegSyms, 7);                           //7:应为语句
             //FIRST(declaration)={const var procedure null };
         } while (declBegSyms.get(sym.symtype));                     //直到没有声明符号
@@ -259,7 +259,7 @@ public class Parser {
          * 分程序声明部分完成后，即将进入语句的处理， 这时的代码分配指针cx的值正好指向语句的开始位置，
          * 这个位置正是前面的jmp指令需要跳转到的位置
          */
-        SymbolTable.record record = table.getItemAt(tx0);
+        SymbolTable.record record = table.at(tx0);
         interp.code[record.addr].a = interp.cx1;//过程入口地址填写在pcodeArray中的jmp 的第二个参数
         record.addr = interp.cx1;       //当前过程代码地址
         record.size = dx;//dx:一个procedure中的变量数目+3 ，声明部分中每增加一条声明都会给dx+1
@@ -278,8 +278,8 @@ public class Parser {
 
         //分析<语句>
         nxtlev = (BitSet) fsys.clone();                                             //每个FOLLOW集合都包含上层FOLLOW集合，以便补救
-        nxtlev.set(Symbol.SymbolType.semicolon.val());                                           //语句后跟符号为分号或者end
-        nxtlev.set(Symbol.SymbolType.endsym.val());
+        nxtlev.set(Symbol.type.semicolon.val());                                           //语句后跟符号为分号或者end
+        nxtlev.set(Symbol.type.endsym.val());
         statement(nxtlev, lev);
 
         /**
@@ -303,16 +303,16 @@ public class Parser {
      * @param lev 当前所在层次
      */
     void constdeclaration(int lev){
-        if(sym.symtype == Symbol.SymbolType.ident.val()){    // const后面接ident
+        if(sym.symtype == Symbol.type.ident.val()){    // const后面接ident
             String constName = sym.name;
 
             getsym();
-            if(sym.symtype == Symbol.SymbolType.eql.val() || sym.symtype == Symbol.SymbolType.becomes.val()){     // 等于或者赋值符号
-                if(sym.symtype == Symbol.SymbolType.becomes.val()){
+            if(sym.symtype == Symbol.type.eql.val() || sym.symtype == Symbol.type.becomes.val()){     // 等于或者赋值符号
+                if(sym.symtype == Symbol.type.becomes.val()){
                     err.outputErrMessage(1, lex.lineNumber);  // error 1: 应是=而不是:=
                 }
                 getsym();                                    // 自动纠正，将:=纠错为=
-                if(sym.symtype == Symbol.SymbolType.number.val()){
+                if(sym.symtype == Symbol.type.number.val()){
                     sym.content = sym.name;
                     sym.name = constName;
                     try {
@@ -338,7 +338,7 @@ public class Parser {
      * @param lev
      */
     void vardeclaration(int lev){
-        if(sym.symtype == Symbol.SymbolType.ident.val()){
+        if(sym.symtype == Symbol.type.ident.val()){
             try {
                 table.enter(sym, SymbolTable.Kind.variable, lev, dx);
             } catch (PL0Exception e) {
@@ -359,21 +359,21 @@ public class Parser {
      * @param lev 当前层次
      */
     void statement(BitSet fsys, int lev){
-        if(sym.symtype == Symbol.SymbolType.ident.val()){
+        if(sym.symtype == Symbol.type.ident.val()){
             parseAssignStatement(fsys, lev);
-        }else if(sym.symtype == Symbol.SymbolType.readsym.val()){
+        }else if(sym.symtype == Symbol.type.readsym.val()){
             parseReadStatement(fsys, lev);
-        }else if(sym.symtype == Symbol.SymbolType.writesym.val()){
+        }else if(sym.symtype == Symbol.type.writesym.val()){
             parseWriteStatement(fsys, lev);
-        }else if(sym.symtype == Symbol.SymbolType.callsym.val()){
+        }else if(sym.symtype == Symbol.type.callsym.val()){
             parseCallStatement(fsys, lev);
-        }else if(sym.symtype == Symbol.SymbolType.ifsym.val()){
+        }else if(sym.symtype == Symbol.type.ifsym.val()){
             parseIfStatement(fsys, lev);
-        }else if(sym.symtype == Symbol.SymbolType.beginsym.val()){
+        }else if(sym.symtype == Symbol.type.beginsym.val()){
             parseBeginStatement(fsys, lev);
-        }else if(sym.symtype == Symbol.SymbolType.whilesym.val()){
+        }else if(sym.symtype == Symbol.type.whilesym.val()){
             parseWhileStatement(fsys, lev);
-        }else if(sym.symtype == Symbol.SymbolType.repeatsym.val()){
+        }else if(sym.symtype == Symbol.type.repeatsym.val()){
             parseRepeatStatement(fsys, lev);
         }else{
             BitSet nxlev = new BitSet(Symbol.symbolNumber);     // 没有停止结合
@@ -382,45 +382,6 @@ public class Parser {
     }
 
 
-    /**
-     * 分析<表达式>
-     * <表达式> ::= [+|-]<项>{<加法运算符><项>}
-     *
-     * @param fsys FOLLOW集合
-     * @param lev 当前层次
-     */
-    private void expression(BitSet fsys, int lev) {
-        if (sym.symtype == Symbol.SymbolType.plus.val() || sym.symtype == Symbol.SymbolType.minus.val()) {                                 //分析[+|-]<项>
-            int addOperatorType = sym.symtype;
-            getsym();
-            BitSet nxtlev = (BitSet) fsys.clone();
-            nxtlev.set(Symbol.SymbolType.plus.val());
-            nxtlev.set(Symbol.SymbolType.minus.val());
-            term(nxtlev, lev);
-            if (addOperatorType == Symbol.SymbolType.minus.val()) //OPR 0 1:：NEG取反
-            {
-                interp.gen(Pcode.OPR, 0, 1);
-            }
-            // 如果不是负号就是正号，不需生成相应的指令
-        } else {
-            BitSet nxtlev = (BitSet) fsys.clone();
-            nxtlev.set(Symbol.SymbolType.plus.val());
-            nxtlev.set(Symbol.SymbolType.minus.val());
-            term(nxtlev, lev);
-        }
-
-        //分析{<加法运算符><项>}
-        while (sym.symtype == Symbol.SymbolType.plus.val() || sym.symtype == Symbol.SymbolType.minus.val()) {
-            int addOperatorType = sym.symtype;
-            getsym();
-            BitSet nxtlev = (BitSet) fsys.clone();
-            //FOLLOW(term)={ +,- }
-            nxtlev.set(Symbol.SymbolType.plus.val());
-            nxtlev.set(Symbol.SymbolType.minus.val());
-            term(nxtlev, lev);
-            interp.gen(Pcode.OPR, 0, addOperatorType);                                    //opr 0 2:执行加法,opr 0 3:执行减法
-        }
-    }
 
 
     /**
@@ -430,12 +391,12 @@ public class Parser {
         int cx1 = interp.cx1;
         getsym();
         BitSet nxtlev = (BitSet) fsys.clone();
-        nxtlev.set(Symbol.SymbolType.semicolon.val());
-        nxtlev.set(Symbol.SymbolType.untilsym.val());       // 分号或者until终结
+        nxtlev.set(Symbol.type.semicolon.val());
+        nxtlev.set(Symbol.type.untilsym.val());       // 分号或者until终结
         statement(fsys, lev);
 
-        while(stateBegSyms.get(sym.symtype) || sym.symtype == Symbol.SymbolType.semicolon.val()){
-            if(sym.symtype == Symbol.SymbolType.semicolon.val()){
+        while(stateBegSyms.get(sym.symtype) || sym.symtype == Symbol.type.semicolon.val()){
+            if(sym.symtype == Symbol.type.semicolon.val()){
                 getsym();
             } else {
                 err.outputErrMessage(10, lex.lineNumber);           // error 10: 语句之间漏分号
@@ -443,7 +404,7 @@ public class Parser {
 
             statement(nxtlev, lev);
         }
-        if(sym.symtype == Symbol.SymbolType.untilsym.val()){     // 到了until
+        if(sym.symtype == Symbol.type.untilsym.val()){     // 到了until
             getsym();
             condition(fsys, lev);
             interp.gen(Pcode.JPC, 0, cx1);                              // TODO cx1是什么东西 以及JPC的条件跳转含义
@@ -468,12 +429,12 @@ public class Parser {
         BitSet nxtlev = (BitSet) fsys.clone();
         //FOLLOW(条件)={ do }
 
-        nxtlev.set(Symbol.SymbolType.dosym.val());         //后跟符号为do
+        nxtlev.set(Symbol.type.dosym.val());         //后跟符号为do
         condition(nxtlev, lev);                                    //分析<条件>
 
         int cx2 = interp.cx1;                                 // 保存循环体的结束下一个位置
         interp.gen(Pcode.JPC, 0, 0);                               // 条件跳转 TODO 为啥是 0 0
-        if (sym.symtype == Symbol.SymbolType.dosym.val()) {
+        if (sym.symtype == Symbol.type.dosym.val()) {
             getsym();
         } else {
             err.outputErrMessage(18, lex.lineNumber);               // error 18: 应为do
@@ -495,20 +456,20 @@ public class Parser {
         getsym();
         BitSet nxtlev = (BitSet) fsys.clone();
         //FOLLOW(statement)={ ; end }
-        nxtlev.set(Symbol.SymbolType.semicolon.val());
-        nxtlev.set(Symbol.SymbolType.endsym.val());
+        nxtlev.set(Symbol.type.semicolon.val());
+        nxtlev.set(Symbol.type.endsym.val());
         statement(nxtlev, lev);
 
         //循环分析{;<语句>},直到下一个符号不是语句开始符号或者收到end
-        while (stateBegSyms.get(sym.symtype) || sym.symtype == Symbol.SymbolType.semicolon.val()) {
-            if (sym.symtype == Symbol.SymbolType.semicolon.val()) {
+        while (stateBegSyms.get(sym.symtype) || sym.symtype == Symbol.type.semicolon.val()) {
+            if (sym.symtype == Symbol.type.semicolon.val()) {
                 getsym();
             } else {
                 err.outputErrMessage(10, lex.lineNumber);                                    // error 10: 语句之间漏分号
             }
             statement(nxtlev, lev);
         }
-        if (sym.symtype == Symbol.SymbolType.endsym.val())                           //若为end，则statement解析正确
+        if (sym.symtype == Symbol.type.endsym.val())                           //若为end，则statement解析正确
         {
             getsym();
         } else {
@@ -534,10 +495,10 @@ public class Parser {
 
         //FOLLOW(condition)={ then do }
         //注释：<当型循环语句> ::= while<条件>do<语句>
-        nxtlev.set(Symbol.SymbolType.thensym.val());
-        nxtlev.set(Symbol.SymbolType.dosym.val());
+        nxtlev.set(Symbol.type.thensym.val());
+        nxtlev.set(Symbol.type.dosym.val());
         condition(nxtlev, lev);                                                    //分析<条件>
-        if (sym.symtype == Symbol.SymbolType.thensym.val()) {
+        if (sym.symtype == Symbol.type.thensym.val()) {
             getsym();
         } else {
             err.outputErrMessage(16, lex.lineNumber);                   //error 16: 应为then
@@ -548,7 +509,7 @@ public class Parser {
         interp.code[cx1].a = interp.cx1;                                         //经statement处理后，cx为then后语句执行
         //完的位置，它正是前面未定的跳转地址
 
-        if (sym.symtype == Symbol.SymbolType.elsesym.val()) {
+        if (sym.symtype == Symbol.type.elsesym.val()) {
             interp.code[cx1].a++;
             getsym();
             int tmpPtr = interp.cx1;
@@ -570,10 +531,10 @@ public class Parser {
      */
     private void parseCallStatement(BitSet fsys, int lev) {
         getsym();
-        if (sym.symtype == Symbol.SymbolType.ident.val()) {              //检查符号表中该标识符是否已声明
+        if (sym.symtype == Symbol.type.ident.val()) {              //检查符号表中该标识符是否已声明
             int index = table.position(sym.name);
             if (index != 0) {                                                    //若table中无此名字，返回0
-                SymbolTable.record item = table.getItemAt(index);                  //获得名字表某一项的内容
+                SymbolTable.record item = table.at(index);                  //获得名字表某一项的内容
                 if (item.kind == SymbolTable.Kind.procedure)                 //检查该标识符的类型是否为procedure
                 {
                     interp.gen(Pcode.CAL, lev - item.level, item.addr);
@@ -600,18 +561,18 @@ public class Parser {
      */
     private void parseWriteStatement(BitSet fsys, int lev) {
         getsym();
-        if (sym.symtype == Symbol.SymbolType.lparen.val()) {
+        if (sym.symtype == Symbol.type.lparen.val()) {
             do {
                 getsym();
                 BitSet nxtlev = (BitSet) fsys.clone();
                 //FOLLOW={ , ')' }
-                nxtlev.set(Symbol.SymbolType.rparen.val());
-                nxtlev.set(Symbol.SymbolType.comma.val());
+                nxtlev.set(Symbol.type.rparen.val());
+                nxtlev.set(Symbol.type.comma.val());
                 expression(nxtlev, lev);
                 interp.gen(Pcode.OPR, 0, 14);                                     //OPR 0 14:输出栈顶的值
-            } while (sym.symtype == Symbol.SymbolType.comma.val());
+            } while (sym.symtype == Symbol.type.comma.val());
 
-            if (sym.symtype == Symbol.SymbolType.rparen.val()) //解析成功
+            if (sym.symtype == Symbol.type.rparen.val()) //解析成功
             {
                 getsym();
             } else {
@@ -634,18 +595,18 @@ public class Parser {
      */
     private void parseReadStatement(BitSet fsys, int lev) {
         getsym();
-        if (sym.symtype == Symbol.SymbolType.lparen.val()) {                                            //左括号
+        if (sym.symtype == Symbol.type.lparen.val()) {                                            //左括号
             int index = 0;
             do {
                 getsym();
-                if (sym.symtype == Symbol.SymbolType.ident.val()) //标识符
+                if (sym.symtype == Symbol.type.ident.val()) //标识符
                 {
                     index = table.position(sym.name);
                 }
                 if (index == 0) {
                     err.outputErrMessage(11, lex.lineNumber);                              //error 11: 标识符未声明
                 } else {
-                    SymbolTable.record record = table.getItemAt(index);
+                    SymbolTable.record record = table.at(index);
                     if (record.kind != SymbolTable.Kind.variable) {                      //判断符号表中的该符号类型是否为变量
                         err.outputErrMessage(33, lex.lineNumber);                                        //read()中的标识符不是变量
                     } else {
@@ -654,11 +615,11 @@ public class Parser {
                     }
                 }
                 getsym();
-            } while (sym.symtype == Symbol.SymbolType.comma.val());
+            } while (sym.symtype == Symbol.type.comma.val());
         } else {
             err.outputErrMessage(26, lex.lineNumber);                                              // error 26: 应为左括号
         }
-        if (sym.symtype == Symbol.SymbolType.rparen.val()) //匹配成功！
+        if (sym.symtype == Symbol.type.rparen.val()) //匹配成功！
         {
             getsym();
         } else {
@@ -684,10 +645,10 @@ public class Parser {
         //从符号表中找到该标识符的信息
         int index = table.position(sym.name);
         if (index > 0) {
-            SymbolTable.record record = table.getItemAt(index);
+            SymbolTable.record record = table.at(index);
             if (record.kind == SymbolTable.Kind.variable) {                            //标识符
                 getsym();
-                if (sym.symtype == Symbol.SymbolType.becomes.val()) {
+                if (sym.symtype == Symbol.type.becomes.val()) {
                     getsym();
                 } else {
                     err.outputErrMessage(13, lex.lineNumber);                                    //error 13: 应为赋值运算符:=
@@ -714,111 +675,140 @@ public class Parser {
      * @param lev 当前层次
      */
     private void term(BitSet fsys, int lev) {
-        //分析<因子>
-        BitSet nxtlev = (BitSet) fsys.clone();
+        BitSet nxtset = (BitSet) fsys.clone();
         //FOLLOW(factor)={ * /}
-        //一个因子后应当遇到乘号或除号
-        nxtlev.set(Symbol.SymbolType.times.val());
-        nxtlev.set(Symbol.SymbolType.slash.val());
 
-        factor(nxtlev, lev);                                                                               //先分析<因子>
+        nxtset.set(Symbol.type.times.val());
+        nxtset.set(Symbol.type.slash.val());
 
-        //分析{<乘法运算符><因子>}
-        while (sym.symtype == Symbol.SymbolType.times.val() || sym.symtype == Symbol.SymbolType.slash.val()) {
-            int mulOperatorType = sym.symtype;                                                          //4表示乘法 ,5表示除法
+        factor(nxtset, lev);
+
+        while (sym.symtype == Symbol.type.times.val() || sym.symtype == Symbol.type.slash.val()) {
+            Symbol mulop = sym;
             getsym();
-            factor(nxtlev, lev);
-            interp.gen(Pcode.OPR, 0, mulOperatorType);                                        //乘法:OPR 0 4 ,除法:OPR 0 5
+            factor(nxtset, lev);
+            if(mulop.symtype == Symbol.type.times.val()){
+                interp.gen(Pcode.OPR, 0, 4);
+            }else{
+                interp.gen(Pcode.OPR, 0, 5);
+            }
         }
     }
 
     /**
      * 分析<因子>
-     * <因子>=<标识符>|<无符号整数>|'('<表达式>')' 开始因子处理前，先检查当前token是否在facbegsys集合中。
-     * 如果不是合法的token，抛24号错误，并通过fsys集恢复使语法处理可以继续进行
+     * <因子>=<标识符>|<无符号整数>|'('<表达式>')'
      *
      * @param fsys FOLLOW集合
      * @param lev 当前层次
      */
     private void factor(BitSet fsys, int lev) {
-        test(facBegSyms, fsys, 24);//                       TODO    !!!!!!!有问题                                    //检测因子的开始符号
-
-        if (facBegSyms.get(sym.symtype)) {
-            if (sym.symtype == Symbol.SymbolType.ident.val()) {                            //因子为常量或变量或者过程名
+        test(facbegSyms, fsys, 24);
+        if (facbegSyms.get(sym.symtype)) {              //TODO  while? ERROR 24: 表达式不能以此符号开始
+            if (sym.symtype == Symbol.type.ident.val()) {
                 int index = table.position(sym.name);
-                if (index > 0) {                                               //大于0:找到，等于0:未找到
-                    SymbolTable.record record = table.getItemAt(index);
-                                                                                //如果这个标识符对应的是常量，值为val，生成lit指令，把val放到栈顶
-                    if(record.kind == SymbolTable.Kind.constant){             //名字为常量
-                        interp.gen(Pcode.LIT, 0, record.value);                   //生成lit指令，把这个数值字面常量放到栈顶
-                    }else if(record.kind == SymbolTable.Kind.variable){       //名字为变量
-                        interp.gen(Pcode.LOD, lev - record.level, record.addr);     //把位于距离当前层level的层的偏移地址为adrr的变量放到栈顶
+                if (index > 0) {
+                    SymbolTable.record record = table.at(index);
+                    if(record.kind == SymbolTable.Kind.constant){
+                        interp.gen(Pcode.LIT, 0, record.value);                     //生成lit指令，把这个数值字面常量放到栈顶
+                    }else if(record.kind == SymbolTable.Kind.variable){
+                        interp.gen(Pcode.LOD, lev - record.level, record.addr);     //取变量放在栈顶
                     }else if(record.kind == SymbolTable.Kind.procedure){
                         err.outputErrMessage(21, lex.lineNumber);               //表达式内不可有过程标识符
                     }
                 } else {
-                    err.outputErrMessage(11, lex.lineNumber);                  //标识符未声明
+                    err.outputErrMessage(11, lex.lineNumber);
                 }
                 getsym();
-            } else if (sym.symtype == Symbol.SymbolType.number.val()) {               //因子为数
+            } else if (sym.symtype == Symbol.type.number.val()) {               //因子为数
                 int num = Integer.parseInt(sym.name);
-                if (num > SymbolTable.addrMax) {                                   //数越界
+                if (num > SymbolTable.addrMax) {
                     err.outputErrMessage(34, lex.lineNumber);
                     num = 0;
                 }
-                interp.gen(Pcode.LIT, 0, num);                     //生成lit指令，把这个数值字面常量放到栈顶
+                interp.gen(Pcode.LIT, 0, num);
                 getsym();
-            } else if (sym.symtype == Symbol.SymbolType.lparen.val()) {                 //因子为表达式：'('<表达式>')'
+            } else if (sym.symtype == Symbol.type.lparen.val()) {                 //因子为表达式：'('<表达式>')'
                 getsym();
-                BitSet nxtlev = (BitSet) fsys.clone();
-                //FOLLOW(expression)={ ) }
-                nxtlev.set(Symbol.SymbolType.rparen.val());
-                expression(nxtlev, lev);
-                if (sym.symtype == Symbol.SymbolType.rparen.val()) //匹配成功
-                {
+                BitSet nxtsys = (BitSet) fsys.clone();
+                nxtsys.set(Symbol.type.rparen.val());
+                expression(nxtsys, lev);
+                if (sym.symtype == Symbol.type.rparen.val()) {
                     getsym();
                 } else {
                     err.outputErrMessage(22, lex.lineNumber);                                   //漏右括号
                 }
-            } else //做补救措施
+            }
+            BitSet nxtSet = new BitSet(1);
+            nxtSet.set(Symbol.type.lparen.val());
+            test(fsys, nxtSet, 23);
+        }
+    }
+
+
+    /**
+     * 分析<表达式>
+     * <表达式> ::= [+|-]<项>{<加法运算符><项>}
+     *
+     * @param fsys FOLLOW集合
+     * @param lev 当前层次
+     */
+    private void expression(BitSet fsys, int lev) {
+        BitSet nxtset = (BitSet) fsys.clone();
+        nxtset.set(Symbol.type.plus.val());
+        nxtset.set(Symbol.type.minus.val());
+        if (sym.symtype == Symbol.type.plus.val() || sym.symtype == Symbol.type.minus.val()) {                                 //分析[+|-]<项>
+            Symbol addop = sym;
+            getsym();
+            term(nxtset, lev);
+            if (addop.symtype == Symbol.type.minus.val()) //OPR 0 1:：NEG取反
             {
-                test(fsys, facBegSyms, 23);                         //一个因子处理完毕，遇到的token应在fsys集合中
-            }																			 //如果不是，抛23号错，并找到下一个因子的开始，使语法分析可以继续运行下去
+                interp.gen(Pcode.OPR, 0, 1);
+            }
+        } else {
+            term(nxtset, lev);
+        }
+
+        while (sym.symtype == Symbol.type.plus.val() || sym.symtype == Symbol.type.minus.val()) {
+            Symbol addop = sym;
+            getsym();
+            term(nxtset, lev);
+            if(addop.symtype == Symbol.type.plus.val())
+                interp.gen(Pcode.OPR, 0, 2);
+            else
+                interp.gen(Pcode.OPR, 0, 3);
         }
     }
 
     /**
      * 分析<条件>
      * <表达式><关系运算符><表达式>|odd<表达式>
-     * 首先判断是否为一元逻辑表达式：判奇偶。 如果是，则通过调用表达式处理过程分析计算表达式的值， 然后生成判奇指令。
-     * 如果不是，则肯定是二元逻辑运算符， 通过调用表达式处理过程依次分析运算符左右两部分的值， 放在栈顶的两个空间中，然后依不同的逻辑运算符，
-     * 生成相应的逻辑判断指令，放入代码段。
      *
      * @param fsys FOLLOW集合
      * @param lev 当前层次
      */
     private void condition(BitSet fsys, int lev) {
-        if (sym.symtype == Symbol.SymbolType.oddsym.val()) {                        //分析ODD<表达式>
+        if (sym.symtype == Symbol.type.oddsym.val()) {
             getsym();
             expression(fsys, lev);
-            interp.gen(Pcode.OPR, 0, 6);                        //OPR 0 6:判断栈顶元素是否为奇数
+            interp.gen(Pcode.OPR, 0, 6);                                //OPR 0 6:判断栈顶元素的odd属性
         } else {                                                           //分析<表达式><关系运算符><表达式>
-            BitSet nxtlev = (BitSet) fsys.clone();
+            BitSet nxtset = new BitSet();
             //FOLLOW(expression)={  =  !=  <  <=  >  >= }
-            nxtlev.set(Symbol.SymbolType.eql.val());
-            nxtlev.set(Symbol.SymbolType.neq.val());
-            nxtlev.set(Symbol.SymbolType.lss.val());
-            nxtlev.set(Symbol.SymbolType.leq.val());
-            nxtlev.set(Symbol.SymbolType.gtr.val());
-            nxtlev.set(Symbol.SymbolType.geq.val());
-            expression(nxtlev, lev);
-            if (sym.symtype == Symbol.SymbolType.eql.val() || sym.symtype == Symbol.SymbolType.neq.val()
-                    || sym.symtype == Symbol.SymbolType.lss.val() || sym.symtype == Symbol.SymbolType.leq.val()
-                    || sym.symtype == Symbol.SymbolType.gtr.val() || sym.symtype == Symbol.SymbolType.geq.val()) {
-                int relationOperatorType = sym.symtype;                                                  //预先保存symtype的值
+            nxtset.set(Symbol.type.eql.val());
+            nxtset.set(Symbol.type.neq.val());
+            nxtset.set(Symbol.type.lss.val());
+            nxtset.set(Symbol.type.leq.val());
+            nxtset.set(Symbol.type.gtr.val());
+            nxtset.set(Symbol.type.geq.val());
+            BitSet nxtset2 = (BitSet) fsys.clone();
+            nxtset2.or(nxtset);
+            expression(nxtset2, lev);
+            if (nxtset.get(sym.symtype)) {
+                Symbol relop = sym;
                 getsym();
                 expression(fsys, lev);
-                interp.gen(Pcode.OPR, 0, relationOperatorType);                                //symtype=eql... leq与7... 13相对应
+                interp.gen(Pcode.OPR, 0, relop.symtype);                                // TODO check
             } else {
                 err.outputErrMessage(20, lex.lineNumber);                                                                              //应为关系运算符
             }

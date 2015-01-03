@@ -11,22 +11,22 @@ public class Symbol {
     public static final int symbolNumber = 35;
     // 保留字对应的符号值
     public static final int[] usedWordsId = new int[]{
-            SymbolType.beginsym.val(),
-            SymbolType.callsym.val(),
-            SymbolType.constsym.val(),
-            SymbolType.dosym.val(),
-            SymbolType.elsesym.val(),
-            SymbolType.endsym.val(),
-            SymbolType.ifsym.val(),
-            SymbolType.oddsym.val(),
-            SymbolType.procsym.val(),
-            SymbolType.readsym.val(),
-            SymbolType.repeatsym.val(),
-            SymbolType.thensym.val(),
-            SymbolType.untilsym.val(),
-            SymbolType.varsym.val(),
-            SymbolType.whilesym.val(),
-            SymbolType.writesym.val()
+            type.beginsym.val(),
+            type.callsym.val(),
+            type.constsym.val(),
+            type.dosym.val(),
+            type.elsesym.val(),
+            type.endsym.val(),
+            type.ifsym.val(),
+            type.oddsym.val(),
+            type.procsym.val(),
+            type.readsym.val(),
+            type.repeatsym.val(),
+            type.thensym.val(),
+            type.untilsym.val(),
+            type.varsym.val(),
+            type.whilesym.val(),
+            type.writesym.val()
     };
 
     // 保留字名字的存放(排序后)
@@ -40,16 +40,16 @@ public class Symbol {
 
     static {
         operatorToIdx = new HashMap<Character, Integer>();
-        operatorToIdx.put('+', SymbolType.plus.val());
-        operatorToIdx.put('-', SymbolType.minus.val());
-        operatorToIdx.put('*', SymbolType.times.val());
-        operatorToIdx.put('/', SymbolType.slash.val());
-        operatorToIdx.put('(', SymbolType.lparen.val());
-        operatorToIdx.put(')', SymbolType.rparen.val());
-        operatorToIdx.put('=', SymbolType.eql.val());
-        operatorToIdx.put(',', SymbolType.comma.val());
-        operatorToIdx.put('.', SymbolType.period.val());
-        operatorToIdx.put(';', SymbolType.semicolon.val());
+        operatorToIdx.put('+', type.plus.val());
+        operatorToIdx.put('-', type.minus.val());
+        operatorToIdx.put('*', type.times.val());
+        operatorToIdx.put('/', type.slash.val());
+        operatorToIdx.put('(', type.lparen.val());
+        operatorToIdx.put(')', type.rparen.val());
+        operatorToIdx.put('=', type.eql.val());
+        operatorToIdx.put(',', type.comma.val());
+        operatorToIdx.put('.', type.period.val());
+        operatorToIdx.put(';', type.semicolon.val());
     }
 
     public String name;
@@ -62,7 +62,7 @@ public class Symbol {
         content = "";
     }
 
-    public static String[] SymbolTypeName = new String[]{
+    public static String[] typeName = new String[]{
             "nul(0)",   // 0 NULL
             "ident(1)",  // 1 标识符
             "number(2)", // 2 数字
@@ -99,7 +99,7 @@ public class Symbol {
             "repeatsym(33)",  // 33 repeat
             "untilsym(34)"    // 34 until
     };
-    public static enum SymbolType {
+    public static enum type {
         nul(0),   // 0 NULL
         ident(1),  // 1 标识符
         number(2), // 2 数字
@@ -138,7 +138,7 @@ public class Symbol {
 
         private int enumValue;
 
-        private SymbolType(int _enumValue) {
+        private type(int _enumValue) {
             this.enumValue = _enumValue;
         }
 
