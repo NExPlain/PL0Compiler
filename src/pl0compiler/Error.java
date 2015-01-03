@@ -6,6 +6,7 @@ import java.io.IOException;
  * Created by lizhen on 14/12/3.
  */
 public class Error {
+    private static final int errMaxCnt = 100;
     public Error(){
             errCnt = 0;
     }
@@ -55,6 +56,9 @@ public class Error {
         };
 
     public static void outputErrMessage(int errID, int lineNumber, int cc){
+        if(errCnt > errMaxCnt){               // todo debugging message
+            return;
+        }
         String errMessage = "****";
         for(int i = 0 ; i < cc-1 ; i ++){
             errMessage += ' ';

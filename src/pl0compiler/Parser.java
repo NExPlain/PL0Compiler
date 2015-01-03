@@ -36,7 +36,7 @@ public class Parser {
      * 放在symboltable的address域
      * 生成目标代码放在code中的a域
      */
-    private int dx = 0;
+    public int dx = 0;
 
     public Parser(Scanner lex, SymbolTable table, Interpreter interp){
         this.lex = lex;
@@ -46,10 +46,6 @@ public class Parser {
 
         /**
          * 设置声明开始符号集
-         * <分程序> ::= [<常量说明部分>][<变量说明部分>]{<过程说明部分>}<语句>
-         * <常量说明部分> ::= const<常量定义>{,<常量定义>};
-         * <变量说明部分>::= var<标识符>{,<标识符>};
-         * <过程说明部分> ::= <过程首部>procedure<标识符>; <分程序>;
          * FIRST(declaration)={const var procedure null };
          */
         declBegSyms = new BitSet(Symbol.symbolNumber);
@@ -59,13 +55,6 @@ public class Parser {
 
         /**
          * 设置语句开始符号集
-         * <语句> ::=<赋值语句>|<条件语句>|<当型循环语句>|<过程调用语句>|<读语句>|<写语句>|<复合语句>|<重复语句>|<空>
-         * <赋值语句> ::= <标识符>:=<表达式>
-         * <条件语句> ::= if<条件>then<语句>[else<语句>]
-         * <当型循环语句> ::= while<条件>do<语句>
-         * <重复语句> ::= repeat<语句>{;<语句>}until<条件>
-         * <过程调用语句> ::= call<标识符>
-         * <复合语句> ::= begin<语句>{;<语句>}end
          * FIRST(statement)={begin call if while repeat null };
          */
         stateBegSyms = new BitSet(Symbol.symbolNumber);
@@ -77,7 +66,6 @@ public class Parser {
 
         /**
          * 设置因子开始符号集
-         * <因子> ::= <标识符>|<无符号整数>|'('<表达式>')'
          * FIRST(factor)={ident,number,( };
          */
         facbegSyms = new BitSet(Symbol.symbolNumber);
@@ -148,7 +136,7 @@ public class Parser {
 
         int dx0 = dx,               //记录本层之前的数据量,以便返回时恢复
                 tx0 = table.tx,   //记录本层名字的初始位置0
-                cx0;
+                cx0 = 0;
 
         //置初始值为3的原因是：
         //每一层最开始的位置有三个空间用于存放静态链SL、动态链DL和返回地址RA
@@ -213,7 +201,7 @@ public class Parser {
                 getsym();
                 if (sym.symtype == Symbol.type.ident.val()) {                      //填写符号表
                     try {
-                        table.enter(sym, SymbolTable.Kind.procedure, lev, dx);
+                        table.enter(sym, SymbolTable.Kind.procedure, lev, this);
                     }catch (PL0Exception e){
                         e.handle(err, lex);
                     }
@@ -327,7 +315,8 @@ public class Parser {
                     sym.content = sym.name;
                     sym.name = constName;
                     try {
-                        table.enter(sym, SymbolTable.Kind.constant, lev, dx);       //将该常量输入符号表中
+                        table.enter(sym, SymbolTable.Kind.constant, lev, this);       //将该常量输入符号表中
+                        getsym();
                     } catch (PL0Exception e) {
                         e.handle(err, lex);
                     }
@@ -351,7 +340,7 @@ public class Parser {
     void vardeclaration(int lev){
         if(sym.symtype == Symbol.type.ident.val()){
             try {
-                table.enter(sym, SymbolTable.Kind.variable, lev, dx);
+                table.enter(sym, SymbolTable.Kind.variable, lev, this);
             } catch (PL0Exception e) {
                 e.handle(err, lex);
             }

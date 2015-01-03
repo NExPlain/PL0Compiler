@@ -1,3 +1,7 @@
-**** Symbol Table ****
-   0  const: a  val: 45
-   1  const: b  val: 27
+unknown table item !
+   1  const: a  val: 45
+   2  const: b  val: 27
+    3  var: x  lev: 0  addr: 3
+    4  var: y  lev: 0  addr: 4
+    5  var: g  lev: 0  addr: 5
+    6  var: m  lev: 0  addr: 6

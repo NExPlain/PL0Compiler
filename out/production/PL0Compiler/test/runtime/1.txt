@@ -1,1 +1,4 @@
-1 const a = 45 , b = 27 ;
+    const a=45,b=27;
+    var x,y,g,m;
+    procedure swap;
+    	var temp;

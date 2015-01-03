@@ -106,11 +106,11 @@ public class SymbolTable {
      * @param sym   要插入的符号
      * @param kind  符号种类
      * @param level 嵌套层次
-     * @param dx    分配变量的相对地址
+     * @param parser 正在运行的语法分析器，用于获取dx（相对地址）
      * @return
      * @throws Exception
      */
-    public void enter(Symbol sym, Kind kind, int level, Integer dx) throws PL0Exception {
+    public void enter(Symbol sym, Kind kind, int level, Parser parser) throws PL0Exception {
         if (tx == MaxTableSize){
             throw new PL0Exception(39);     // 符号表溢出
         }
@@ -127,8 +127,8 @@ public class SymbolTable {
             record.value = Integer.parseInt(sym.content);                        // const 变量不需要level
         }else if(kind.val() == Kind.variable.val()){    // 变量
             record.level = level;
-            record.addr = dx;                                                 // 相对此过程的偏移量
-            dx = dx + 1;                                                      // TODO 确认向外传递dx的变化
+            record.addr = parser.dx;                                                 // 相对此过程的偏移量
+            parser.dx = parser.dx + 1;
         }else if(kind.val() == Kind.procedure.val()){   // 过程名
             record.level = level;
             record.addr = 0;
@@ -140,6 +140,7 @@ public class SymbolTable {
             }
         }
         tab[++tx] = record;
+        debugTable(tx-1);
     }
 
 
@@ -153,12 +154,14 @@ public class SymbolTable {
         {
             return;
         }
+        /*
         try {
             PL0.tableWriter.write("**** Symbol Table ****\n");
             PL0.tableWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        */
         if (start > tx) {
             System.out.println("  NULL");
         }

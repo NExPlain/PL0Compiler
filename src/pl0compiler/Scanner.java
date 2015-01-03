@@ -65,7 +65,7 @@ public class Scanner {
                 e.printStackTrace();
                 System.out.println("reading files error");
             }
-            Buffer += " ";                     //  加一个空格表示到达行末尾，与下一行的开头分开
+            Buffer += " ";                                         // 加一个空格表示到达行末尾，与下一行的开头分开
             cc = 0;
         }
         if(cc < Buffer.length())ch = Buffer.charAt(cc++);

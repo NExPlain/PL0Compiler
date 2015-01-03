@@ -36,6 +36,7 @@ public class Interpreter {
             throw new PL0Exception(38);
         }
         code[cx++] = new Pcode(f, l, a);
+        listcode(cx-1);
     }
 
 
