@@ -65,6 +65,7 @@ public class Error {
         }
         errMessage += "^" + errorInfo[errID];
         try {
+            System.out.println(errMessage);
             PL0.outputWriter.write(errMessage + "\n");
         } catch (IOException e) {
             e.printStackTrace();
@@ -81,10 +82,6 @@ public class Error {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println(errMessage);
-    }
-
-    public static void debugging(Symbol sym){
-        System.out.println(Symbol.typeName[sym.symtype]);
+        //System.out.println(errMessage);
     }
 }

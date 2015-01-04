@@ -1,7 +1,5 @@
 package pl0compiler;
 
-import jdk.internal.org.objectweb.asm.Handle;
-
 import java.lang.*;
 import java.util.BitSet;
 
@@ -14,55 +12,44 @@ public class Parser {
     public Symbol sym;     //当前的符号
     public Scanner lex;    //词法分析器
     public SymbolTable table;  //符号表
-    public Interpreter interp;  //虚拟机指令
+    public PcodeVM pcodeVM;  //虚拟机指令
     public Error err;
 
     /**
-     * 声明的First符号集合
+     * 声明、语句和因子的FIRST集合
      */
-    private BitSet declBegSyms;
-    /**
-     * 语句的First符号集合
-     */
-    private BitSet stateBegSyms;
-    /**
-     * 因子开始的First符号集合
-     */
-    private BitSet facbegSyms;
+    private BitSet declbegSyms, statebegSyms, facbegSyms;
 
     /**
-     * 当前作用域的堆栈帧大小，或者说是数据大小
-     * 计算每个变量在运行栈中相对本过程基地址的偏移量 （注意是相对本过程的偏移量）
-     * 放在symboltable的address域
-     * 生成目标代码放在code中的a域
+     * 桢栈大小（相对本过程的偏移量）
      */
     public int dx = 0;
 
-    public Parser(Scanner lex, SymbolTable table, Interpreter interp){
+    public Parser(Scanner lex, SymbolTable table, PcodeVM pcodeVM){
         this.lex = lex;
         this.table = table;
-        this.interp = interp;
+        this.pcodeVM = pcodeVM;
         this.err = new Error();
 
         /**
          * 设置声明开始符号集
          * FIRST(declaration)={const var procedure null };
          */
-        declBegSyms = new BitSet(Symbol.symbolNumber);
-        declBegSyms.set(Symbol.type.constsym.val());
-        declBegSyms.set(Symbol.type.varsym.val());
-        declBegSyms.set(Symbol.type.procsym.val());
+        declbegSyms = new BitSet(Symbol.symbolNumber);
+        declbegSyms.set(Symbol.type.constsym.val());
+        declbegSyms.set(Symbol.type.varsym.val());
+        declbegSyms.set(Symbol.type.procsym.val());
 
         /**
          * 设置语句开始符号集
          * FIRST(statement)={begin call if while repeat null };
          */
-        stateBegSyms = new BitSet(Symbol.symbolNumber);
-        stateBegSyms.set(Symbol.type.beginsym.val());
-        stateBegSyms.set(Symbol.type.callsym.val());
-        stateBegSyms.set(Symbol.type.whilesym.val());
-        stateBegSyms.set(Symbol.type.ifsym.val());
-        stateBegSyms.set(Symbol.type.repeatsym.val());
+        statebegSyms = new BitSet(Symbol.symbolNumber);
+        statebegSyms.set(Symbol.type.beginsym.val());
+        statebegSyms.set(Symbol.type.callsym.val());
+        statebegSyms.set(Symbol.type.whilesym.val());
+        statebegSyms.set(Symbol.type.ifsym.val());
+        statebegSyms.set(Symbol.type.repeatsym.val());
 
         /**
          * 设置因子开始符号集
@@ -94,15 +81,13 @@ public class Parser {
      * @param n 错误编码
      */
     void test(BitSet s1, BitSet s2, int n) {
-        System.out.println("test start");
         if (!s1.get(sym.symtype)) {
             PL0Exception.handle(n, err, lex);
             s1.or(s2);
-            while (!s1.get(sym.symtype)) {
+            while (!s1.get(sym.symtype) && sym.symtype != Symbol.type.nul.val()) {
                 getsym();
             }
         }
-        System.out.println("test end");
     }
 
     /**
@@ -110,8 +95,8 @@ public class Parser {
      */
     public void start(){
         BitSet fsys = new BitSet(Symbol.symbolNumber);
-        fsys.or(declBegSyms);                                         // 可以是声明开头
-        fsys.or(stateBegSyms);                                        // 可以是语句开头
+        fsys.or(declbegSyms);                                         // 可以是声明开头
+        fsys.or(statebegSyms);                                        // 可以是语句开头
         fsys.set(Symbol.type.period.val());
 
         block(0, fsys);                                               // 解析<分程序>
@@ -134,19 +119,17 @@ public class Parser {
 
         BitSet nxtset = new BitSet(Symbol.symbolNumber);
 
-        int dx0 = dx,               //记录本层之前的数据量,以便返回时恢复
-                tx0 = table.tx,   //记录本层名字的初始位置0
-                cx0 = 0;
+        int dx0 = dx,               //data allocation index
+                tx0 = table.tx,     //initial table index
+                cx0 = 0;            //initial code index
 
-        //置初始值为3的原因是：
         //每一层最开始的位置有三个空间用于存放静态链SL、动态链DL和返回地址RA
         dx = 3;
 
-        //当前pcode代码的地址，传给当前符号表的addr项（第几条pcode代码）
-        table.at(table.tx).addr = interp.cx;                                 //在符号表的当前位置tablePtr记录下这个jmp指令在代码段中的位置(即arrayPtr)
+        table.at(table.tx).adr = pcodeVM.cx;                                                         //在符号表中纪录这个代码的位置
 
         try {
-            interp.gen(Pcode.JMP, 0, 0);                                                            //JMP 0 0
+            pcodeVM.gen(Pcode.JMP, 0, 0);
         } catch (PL0Exception e) {
             e.handle(err, lex);
         }
@@ -224,7 +207,7 @@ public class Parser {
 
                     getsym();
                     //FIRST(statement)={begin call if while repeat null };
-                    nxtset = (BitSet) stateBegSyms.clone();                     //语句的FIRST集合
+                    nxtset = (BitSet) statebegSyms.clone();                     //语句的FIRST集合
                     //FOLLOW(嵌套分程序)={ ident , procedure }
                     nxtset.set(Symbol.type.ident.val());
                     nxtset.set(Symbol.type.procsym.val());
@@ -238,22 +221,22 @@ public class Parser {
              * FIRST(statement)={begin call if while repeat null };
              * FIRST(declaration)={const var procedure null };
              */
-            nxtset = (BitSet) stateBegSyms.clone();
+            nxtset = (BitSet) statebegSyms.clone();
             //FIRST(statement)={ ident }
             nxtset.set(Symbol.type.ident.val());
-            test(nxtset, declBegSyms, 7);                           //7:应为语句
+            test(nxtset, declbegSyms, 7);                           //7:应为语句
             //FIRST(declaration)={const var procedure null };
-        } while (declBegSyms.get(sym.symtype));                     //直到没有声明符号
+        } while (declbegSyms.get(sym.symtype));                     //直到没有声明符号
 
         //开始生成当前过程代码
         /**
          * 分程序声明部分完成后，即将进入语句的处理， 这时的代码分配指针cx的值正好指向语句的开始位置，
          * 这个位置正是前面的jmp指令需要跳转到的位置
          */
-        SymbolTable.record record = table.at(tx0);
-        interp.code[record.addr].a = interp.cx;                         //过程入口地址填写在pcodeArray中的jmp 的a参数里
-        record.addr = interp.cx;                                        //当前过程代码地址
-        record.size = dx;                                               //dx: 一个procedure中的变量数目+3 ，声明部分中每增加一条声明都会给dx+1
+        SymbolTable.record item = table.at(tx0);
+        pcodeVM.code[item.adr].a = pcodeVM.cx;                         //过程入口地址填写在code中的jmp 的a参数里
+        item.adr = pcodeVM.cx;                                        //当前过程代码地址
+        item.size = dx;                                               //dx: 一个procedure中的变量数目+3 ，声明部分中每增加一条声明都会给dx+1
         //声明部分已经结束，dx就是当前过程的堆栈帧大小
 
         /**
@@ -261,11 +244,10 @@ public class Parser {
          * 并在符号表中记录下当前的代码段分配地址和局部数据段要分配的大小（dx的值）。 生成一条int指令，分配dx个空间，
          * 作为这个分程序段的第一条指令。 下面就调用语句处理过程statement分析语句。
          */
-        cx0 = interp.cx;
-        //生成分配内存代码，
+        cx0 = pcodeVM.cx;
 
         try {
-            interp.gen(Pcode.INT, 0, dx);
+            pcodeVM.gen(Pcode.INT, 0, dx);
         } catch (PL0Exception e) {
             e.handle(err, lex);
         }
@@ -281,15 +263,13 @@ public class Parser {
          */
 
         try {
-            interp.gen(Pcode.OPR, 0, 0);                                               //每个过程出口都要使用的释放数据段指令
+            pcodeVM.gen(Pcode.OPR, 0, 0);                                                   //每个过程出口都要使用的释放数据段指令
         } catch (PL0Exception e) {
             e.handle(err, lex);
         }
 
-        nxtset = new BitSet(Symbol.symbolNumber);                                        //分程序没有补救集合
-        test(fsys, nxtset, 8);                                                          //检测后跟符号正确性
-
-        interp.listcode(cx0);
+        nxtset = new BitSet(Symbol.symbolNumber);                                           //分程序没有补救集合
+        test(fsys, nxtset, 8);                                                              //检测后跟符号正确性
 
         dx = dx0;                                                                           //恢复堆栈帧计数器
         table.tx = tx0;                                                                     //回复名字表位置
@@ -374,10 +354,9 @@ public class Parser {
             parseWhileStatement(fsys, lev);
         }else if(sym.symtype == Symbol.type.repeatsym.val()){              // <repeat>
             parseRepeatStatement(fsys, lev);
-        }else{
-            BitSet nxlev = new BitSet(Symbol.symbolNumber);     // 没有停止结合
-            test(fsys, nxlev, 19);                              // error 19 : 语句后的符号不正确
         }
+        BitSet nxlev = new BitSet(Symbol.symbolNumber);     // 没有停止结合
+        test(fsys, nxlev, 19);                              // error 19 : 语句后的符号不正确
     }
 
 
@@ -402,7 +381,7 @@ public class Parser {
                 BitSet nxtlev = (BitSet) fsys.clone();
                 expression(nxtlev, lev);                                                         //表达式
                 try {
-                    interp.gen(Pcode.STO, lev - record.level, record.addr);                          // 计算结果保留在栈顶
+                    pcodeVM.gen(Pcode.STO, lev - record.level, record.adr);                          // 计算结果保留在栈顶
                 } catch (PL0Exception e) {
                     e.handle(err, lex);
                 }
@@ -431,7 +410,7 @@ public class Parser {
                 if (item.kind == SymbolTable.Kind.procedure)                 //检查该标识符的类型是否为procedure
                 {
                     try {
-                        interp.gen(Pcode.CAL, lev - item.level, item.addr);
+                        pcodeVM.gen(Pcode.CAL, lev - item.level, item.adr);
                     } catch (PL0Exception e) {
                         e.handle(err,lex);
                     }
@@ -467,40 +446,41 @@ public class Parser {
         } else {
             PL0Exception.handle(16, err, lex);                               //error 16: 应为then
         }
-        int cx1 = interp.cx;                                                        //保存当前指令地址
+        int cx1 = pcodeVM.cx;                                                        //保存当前指令地址
         try {
-            interp.gen(Pcode.JPC, 0, 0);                                                 //生成条件跳转指令，跳转地址位置，暂时写0
+            pcodeVM.gen(Pcode.JPC, 0, 0);                                                 //生成条件跳转指令，跳转地址位置，暂时写0
         } catch (PL0Exception e) {
             e.handle(err,lex);
         }
         statement(fsys, lev);                                                        //处理then后的statement
-        interp.code[cx1].a = interp.cx;                                             //经statement处理后，cx为then后语句执行
+        pcodeVM.code[cx1].a = pcodeVM.cx;                                             //经statement处理后，cx为then后语句执行
 
         if (sym.symtype == Symbol.type.elsesym.val()) {
-            interp.code[cx1].a++;
+            pcodeVM.code[cx1].a++;
             getsym();
-            cx1 = interp.cx;
+            cx1 = pcodeVM.cx;
             try {
-                interp.gen(Pcode.JMP, 0, 0);
+                pcodeVM.gen(Pcode.JMP, 0, 0);
             } catch (PL0Exception e) {
                 e.handle(err,lex);
             }
             statement(fsys, lev);
-            interp.code[cx1].a = interp.cx;
+            pcodeVM.code[cx1].a = pcodeVM.cx;
         }
     }
+
     /**
      * <重复语句>::= repeat<语句>{;<语句>}until<条件>
      */
     private void parseRepeatStatement(BitSet fsys, int lev){
-        int cx1 = interp.cx;
+        int cx1 = pcodeVM.cx;
         getsym();
         BitSet nxtlev = (BitSet) fsys.clone();
         nxtlev.set(Symbol.type.semicolon.val());
         nxtlev.set(Symbol.type.untilsym.val());       // 分号或者until终结
         statement(fsys, lev);
 
-        while(stateBegSyms.get(sym.symtype) || sym.symtype == Symbol.type.semicolon.val()){
+        while(statebegSyms.get(sym.symtype) || sym.symtype == Symbol.type.semicolon.val()){
             if(sym.symtype == Symbol.type.semicolon.val()){
                 getsym();
             } else {
@@ -512,7 +492,7 @@ public class Parser {
             getsym();
             condition(fsys, lev);
             try {
-                interp.gen(Pcode.JPC, 0, cx1);
+                pcodeVM.gen(Pcode.JPC, 0, cx1);
             } catch (PL0Exception e) {
                 e.handle(err,lex);
             }
@@ -532,31 +512,31 @@ public class Parser {
      * @param lev 当前层次
      */
     private void parseWhileStatement(BitSet fsys, int lev) {
-        int cx1 = interp.cx;                                //保存判断条件操作的位置
+        int cx1 = pcodeVM.cx;                                           //保存判断条件操作的位置
         getsym();
         BitSet nxtset = (BitSet) fsys.clone();
 
-        nxtset.set(Symbol.type.dosym.val());         //后跟符号为do
-        condition(nxtset, lev);                                    //分析<条件>
+        nxtset.set(Symbol.type.dosym.val());                           //后跟符号为do
+        condition(nxtset, lev);                                        //分析<条件>
 
-        int cx2 = interp.cx;
+        int cx2 = pcodeVM.cx;
         try {
-            interp.gen(Pcode.JPC, 0, 0);                               // 条件跳转
+            pcodeVM.gen(Pcode.JPC, 0, 0);                               //条件跳转
         } catch (PL0Exception e) {
             e.handle(err, lex);
         }
         if (sym.symtype == Symbol.type.dosym.val()) {
             getsym();
         } else {
-            PL0Exception.handle(18, err, lex);               // error 18: 应为do
+            PL0Exception.handle(18, err, lex);                         //error 18: 应为do
         }
-        statement(fsys, lev);                                       //分析<语句>
+        statement(fsys, lev);                                          //分析<语句>
         try {
-            interp.gen(Pcode.JMP, 0, cx1);
+            pcodeVM.gen(Pcode.JMP, 0, cx1);
         } catch (PL0Exception e) {
             e.handle(err, lex);
         }
-        interp.code[cx2].a = interp.cx;                            //反填跳出循环的地址，与<条件语句>类似
+        pcodeVM.code[cx2].a = pcodeVM.cx;                                //反填跳出循环的地址，与<条件语句>类似
     }
 
     /**
@@ -574,7 +554,7 @@ public class Parser {
         nxtlev.set(Symbol.type.endsym.val());
         statement(nxtlev, lev);
 
-        while (sym.symtype == Symbol.type.semicolon.val() || stateBegSyms.get(sym.symtype)) {
+        while (sym.symtype == Symbol.type.semicolon.val() || statebegSyms.get(sym.symtype)) {
             if (sym.symtype == Symbol.type.semicolon.val()) {
                 getsym();
             } else {
@@ -615,7 +595,7 @@ public class Parser {
                             PL0Exception.handle(33, err, lex);                                       //read()中的标识符不是变量
                         } else {
                             try {
-                                interp.gen(Pcode.RED, lev - record.level, record.addr);
+                                pcodeVM.gen(Pcode.RED, lev - record.level, record.adr);
                             } catch (PL0Exception e) {
                                 e.handle(err,lex);
                             }
@@ -655,7 +635,7 @@ public class Parser {
                 getsym();
                 expression(nxtset, lev);
                 try {
-                    interp.gen(Pcode.WRT, 0, 0);
+                    pcodeVM.gen(Pcode.WRT, 0, 0);
                 } catch (PL0Exception e) {
                     e.handle(err,lex);
                 }
@@ -693,13 +673,13 @@ public class Parser {
             factor(nxtset, lev);
             if(mulop.symtype == Symbol.type.times.val()){
                 try {
-                    interp.gen(Pcode.OPR, 0, 4);
+                    pcodeVM.gen(Pcode.OPR, 0, 4);
                 } catch (PL0Exception e) {
                     e.handle(err,lex);
                 }
             }else{
                 try {
-                    interp.gen(Pcode.OPR, 0, 5);
+                    pcodeVM.gen(Pcode.OPR, 0, 5);
                 } catch (PL0Exception e) {
                     e.handle(err,lex);
                 }
@@ -723,13 +703,13 @@ public class Parser {
                     SymbolTable.record record = table.at(index);
                     if(record.kind == SymbolTable.Kind.constant){
                         try {
-                            interp.gen(Pcode.LIT, 0, record.value);                     //生成lit指令，把这个数值字面常量放到栈顶
+                            pcodeVM.gen(Pcode.LIT, 0, record.value);                     //生成lit指令，把这个数值字面常量放到栈顶
                         } catch (PL0Exception e) {
                             e.handle(err,lex);
                         }
                     }else if(record.kind == SymbolTable.Kind.variable){
                         try {
-                            interp.gen(Pcode.LOD, lev - record.level, record.addr);     //取变量放在栈顶
+                            pcodeVM.gen(Pcode.LOD, lev - record.level, record.adr);     //取变量放在栈顶
                         } catch (PL0Exception e) {
                             e.handle(err,lex);
                         }
@@ -747,7 +727,7 @@ public class Parser {
                     num = 0;
                 }
                 try {
-                    interp.gen(Pcode.LIT, 0, num);
+                    pcodeVM.gen(Pcode.LIT, 0, num);
                 } catch (PL0Exception e) {
                     e.handle(err,lex);
                 }
@@ -788,7 +768,7 @@ public class Parser {
             if (addop.symtype == Symbol.type.minus.val()) //OPR 0 1:：NEG取反
             {
                 try {
-                    interp.gen(Pcode.OPR, 0, 1);
+                    pcodeVM.gen(Pcode.OPR, 0, 1);
                 } catch (PL0Exception e) {
                     e.handle(err, lex);
                 }
@@ -803,13 +783,13 @@ public class Parser {
             term(nxtset, lev);
             if(addop.symtype == Symbol.type.plus.val())
                 try {
-                    interp.gen(Pcode.OPR, 0, 2);
+                    pcodeVM.gen(Pcode.OPR, 0, 2);
                 } catch (PL0Exception e) {
                     e.handle(err,lex);
                 }
             else
                 try {
-                    interp.gen(Pcode.OPR, 0, 3);
+                    pcodeVM.gen(Pcode.OPR, 0, 3);
                 } catch (PL0Exception e) {
                     e.handle(err, lex);
                 }
@@ -828,7 +808,7 @@ public class Parser {
             getsym();
             expression(fsys, lev);
             try {
-                interp.gen(Pcode.OPR, 0, 6);                                //OPR 0 6:判断栈顶元素的odd属性
+                pcodeVM.gen(Pcode.OPR, 0, 6);                                //OPR 0 6:判断栈顶元素的odd属性
             } catch (PL0Exception e) {
                 e.handle(err, lex);
             }
@@ -864,7 +844,7 @@ public class Parser {
                     debug("not supported type");
                 }
                 try {
-                    interp.gen(Pcode.OPR, 0, reloptype);
+                    pcodeVM.gen(Pcode.OPR, 0, reloptype);
                 } catch (PL0Exception e) {
                     e.handle(err, lex);
                 }

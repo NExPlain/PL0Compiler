@@ -1,0 +1,17 @@
+1  const: m  val: 7
+2  const: n  val: 85
+3  var: x  lev: 0  adr: 3
+4  var: y  lev: 0  adr: 4
+5  var: z  lev: 0  adr: 5
+6  var: q  lev: 0  adr: 6
+7  var: r  lev: 0  adr: 7
+8 proc: multiply  lev: 0  adr: 0
+9  var: a  lev: 1  adr: 3
+10  var: b  lev: 1  adr: 4
+9 proc: divide  lev: 0  adr: 0
+10  var: w  lev: 1  adr: 3
+11  const: two  val: 2
+12  const: three  val: 3
+10 proc: gcd  lev: 0  adr: 0
+11  var: f  lev: 1  adr: 3
+12  var: g  lev: 1  adr: 4

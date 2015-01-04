@@ -51,8 +51,6 @@ public class Scanner {
                     Buffer = cin.readLine();
                     if(Buffer == null){
                         Error.outputErrMessage(36, lineNumber);
-                        //PL0.outputWriter.write(cx + " " );
-                        //TODO cx是什么东西
                         fileEneded = true;
                         return ch = '\0';
                     }
@@ -66,6 +64,7 @@ public class Scanner {
                 System.out.println("reading files error");
             }
             Buffer += " ";                                         // 加一个空格表示到达行末尾，与下一行的开头分开
+            System.out.println("    "+Buffer);
             cc = 0;
         }
         if(cc < Buffer.length())ch = Buffer.charAt(cc++);
@@ -101,7 +100,7 @@ public class Scanner {
      */
     public Symbol getsym() throws PL0Exception {
         Symbol currentSym = new Symbol(Symbol.type.nul.val());
-        while (ch == ' ') {
+        while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\u0010') {
             getch();
         }
         if(ch == '\0'){

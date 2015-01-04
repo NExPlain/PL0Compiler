@@ -1,7 +1,7 @@
 const a=45,b=27;
 var x,y,g,m;
 procedure swap;
-var temp;
+	var temp;
 	begin
 		temp := x;
 		x := y;

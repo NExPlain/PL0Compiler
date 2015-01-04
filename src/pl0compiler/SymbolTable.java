@@ -15,7 +15,6 @@ public class SymbolTable {
     private static final int MaxTableSize = 1000;
     public static final int levMax = 3;
     public static final int addrMax = 1000000;      // 最大允许的数值
-    private boolean debugging = true;
 
     public record[] tab;// 栈式符号表
 
@@ -41,24 +40,24 @@ public class SymbolTable {
 
     public class record {
         String name;            // 名字
-        Kind kind;          // 种类(constant, variable, procedure)
+        Kind kind;                // 种类(constant, variable, procedure)
         int value;                // 值，当kind为常量时
-        int level;              // 嵌套层次
-        int addr;               // 地址，当kind为常量或过程时
+        int level;                // 嵌套层次
+        int adr;                 // 地址，当kind为常量或过程时
         int size;               // 该item的大小
 
-        public record(String name, Kind kind, int value, int level, int addr) {
+        public record(String name, Kind kind, int value, int level, int adr) {
             this.name = name;
             this.kind = kind;
             this.value = value;
             this.level = level;
-            this.addr = addr;
+            this.adr = adr;
         }
         public record(){
             name = "";
         }
         public void reDirectAddr(int addr) {
-            this.addr = addr;
+            this.adr = addr;
         }
     }
 
@@ -123,15 +122,16 @@ public class SymbolTable {
         record record = new record();
         record.name = sym.name;
         record.kind = kind;
-        if(kind.val() == Kind.constant.val()){          // 常量
-            record.value = Integer.parseInt(sym.content);                        // const 变量不需要level
-        }else if(kind.val() == Kind.variable.val()){    // 变量
+        if(kind.val() == Kind.constant.val()){                                          // 常量
+            record.value = Integer.parseInt(sym.content);                               // const 变量不需要level
+        }else if(kind.val() == Kind.variable.val()){                                    // 变量
             record.level = level;
-            record.addr = parser.dx;                                                 // 相对此过程的偏移量
+            if(record.adr == 0)
+                record.adr = parser.dx;                                                 // 相对此过程的偏移量
             parser.dx = parser.dx + 1;
         }else if(kind.val() == Kind.procedure.val()){   // 过程名
             record.level = level;
-            record.addr = 0;
+            record.adr = 0;
         }else{
             try {
                 throw new Exception("Unknow Item kind in the SymbolTable!!!!");
@@ -140,47 +140,35 @@ public class SymbolTable {
             }
         }
         tab[++tx] = record;
-        debugTable(tx-1);
+        printTable(tx);
     }
 
 
     /**
-     * 输出符号表内容，摘自block()函数
+     * 输出符号表内容
      *
      * @param start 当前符号表区间的左端
      */
-    void debugTable(int start) {
-        if (!debugging)
-        {
-            return;
-        }
-        /*
-        try {
-            PL0.tableWriter.write("**** Symbol Table ****\n");
-            PL0.tableWriter.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
+    void printTable(int start) {
         if (start > tx) {
             System.out.println("  NULL");
         }
-        for (int i = start; i < tx; i++) {
+        for (int i = start; i <= tx; i++) {
             try {
-                String msg = "unknown table item !";
+                String msg = "table error !";
                 if(tab[i].kind == Kind.constant){
-                    msg = "   " + i + "  const: " + tab[i].name + "  val: " + tab[i].value;
+                    msg = i + "  const: " + tab[i].name + "  val: " + tab[i].value;
                 }else if(tab[i].kind == Kind.variable){
-                    msg = "    " + i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  addr: " + tab[i].addr;
+                    msg = i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].adr;
                 }else if(tab[i].kind == Kind.procedure){
-                    msg = "    " + i + " proc: " + tab[i].name + "  lev: " + tab[i].level + "  addr: " + tab[i].size;
+                    msg = i + " proc: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].size;
                 }
                 System.out.println(msg);
                 PL0.tableWriter.write(msg + '\n');
                 PL0.tableWriter.flush();
             } catch (IOException ex) {
                 ex.printStackTrace();
-                System.out.println("***write table intfo meet with error***");
+                System.out.println("***write table info error***");
             }
         }
     }
