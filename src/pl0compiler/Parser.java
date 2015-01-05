@@ -8,7 +8,6 @@ import java.util.BitSet;
  * 语法分析器，在语法分析过程中处理语义和目标代码生成
  */
 public class Parser {
-    /*说明和语句分别处理*/
     public Symbol sym;     //当前的符号
     public Scanner scan;    //词法分析器
     public SymbolTable table;  //符号表
@@ -25,10 +24,10 @@ public class Parser {
      */
     public int dx = 0;
 
-    public Parser(Scanner scan, SymbolTable table, PcodeVM pcodeVM){
-        this.scan = scan;
-        this.table = table;
-        this.pcodeVM = pcodeVM;
+    public Parser(String inputfilePath){
+        this.scan = new Scanner(inputfilePath);
+        this.table = new SymbolTable();
+        this.pcodeVM = new PcodeVM();
         this.err = new Error();
 
         /**
@@ -95,11 +94,11 @@ public class Parser {
      */
     public void start(){
         BitSet fsys = new BitSet(Symbol.symbolNumber);
-        fsys.or(declbegSyms);                                         // 可以是声明开头
-        fsys.or(statebegSyms);                                        // 可以是语句开头
+        fsys.or(declbegSyms);
+        fsys.or(statebegSyms);
         fsys.set(Symbol.type.period.val());
 
-        block(0, fsys);                                               // 解析<分程序>
+        block(0, fsys);
 
         if(sym.symtype != Symbol.type.period.val()){
             PL0Exception.handle(9, err, scan);
@@ -123,7 +122,7 @@ public class Parser {
                 tx0 = table.tx,     //initial table index
                 cx0 = 0;            //initial code index
 
-        //每一层最开始的位置有三个空间用于存放静态链SL、动态链DL和返回地址RA
+        // 存放静态链SL、动态链DL和返回地址RA， 三个位置
         dx = 3;
 
         table.at(table.tx).adr = pcodeVM.cx;                                                         //在符号表中纪录这个代码的位置
@@ -136,12 +135,10 @@ public class Parser {
 
         if (lev > SymbolTable.levMax) //必须先判断嵌套层层数
         {
-            PL0Exception.handle(31, err, scan);                                          // error 31: 嵌套层数过大
+            PL0Exception.handle(31, err, scan);                                                //error 31: 嵌套层数过大
         }
         do {
-            //分析<说明部分>
-            //<常量说明部分> ::= const<常量定义>{,<常量定义>};
-            if (sym.symtype == Symbol.type.constsym.val()) {                 //例如const a=0,b=0,... ...,z=0;
+            if (sym.symtype == Symbol.type.constsym.val()) {                                   //分析<说明部分>
                 getsym();
                 do {
                     constdeclaration(lev);                                                     //分析<常量定义>
@@ -149,7 +146,7 @@ public class Parser {
                         getsym();
                         constdeclaration(lev);
                     }
-                    if (sym.symtype == Symbol.type.semicolon.val())                   //如果是分号，表示常量申明结束
+                    if (sym.symtype == Symbol.type.semicolon.val())
                     {
                         getsym();
                     } else {
@@ -157,17 +154,15 @@ public class Parser {
                     }
                 }while(sym.symtype == Symbol.type.ident.val());
             }
-            //分析<变量说明>
-            //var<标识符>{,<标识符>};
-            if (sym.symtype == Symbol.type.varsym.val()) {                       //读入的数为var
+            if (sym.symtype == Symbol.type.varsym.val()) {                                      //分析<变量说明>
                 do {
                     getsym();
-                    vardeclaration(lev);                                                        //识别<标识符>
-                    while (sym.symtype == Symbol.type.comma.val()) {              //识别{,<标识符>}
+                    vardeclaration(lev);
+                    while (sym.symtype == Symbol.type.comma.val()) {                             //识别{,<标识符>}
                         getsym();
                         vardeclaration(lev);
                     }
-                    if (sym.symtype == Symbol.type.semicolon.val()) //如果是分号，表示变量申明结束
+                    if (sym.symtype == Symbol.type.semicolon.val())
                     {
                         getsym();
                     } else {
@@ -180,9 +175,9 @@ public class Parser {
              * <过程说明部分> ::=  procedure<标识符>; <分程序> ;
              * FOLLOW(semicolon)={NULL<过程首部>}，
              */
-            while (sym.symtype == Symbol.type.procsym.val()) {                 //如果是procedure
+            while (sym.symtype == Symbol.type.procsym.val()) {                                   //分析<过程>
                 getsym();
-                if (sym.symtype == Symbol.type.ident.val()) {                      //填写符号表
+                if (sym.symtype == Symbol.type.ident.val()) {
                     try {
                         table.enter(sym, SymbolTable.kind.procedure, lev, this);
                     }catch (PL0Exception e){
@@ -192,45 +187,47 @@ public class Parser {
                 } else {
                     PL0Exception.handle(4, err, scan);                                     // error 4: procedure后应为标识符
                 }
-                if (sym.symtype == Symbol.type.semicolon.val())               //分号，表示<过程首部>结束
+                if (sym.symtype == Symbol.type.semicolon.val())
                 {
                     getsym();
                 } else {
                     PL0Exception.handle(5, err, scan);                                     // error 5: 漏了逗号或者分号
                 }
-                nxtset = (BitSet) fsys.clone();                      //当前模块(block)的FOLLOW集合
+                nxtset = (BitSet) fsys.clone();
 
                 //FOLLOW(block)={ ; }
                 nxtset.set(Symbol.type.semicolon.val());
-                block(lev + 1, nxtset);                                  //嵌套层次+1，分析分程序
+                block(lev + 1, nxtset);                                                     // 递归调用，分析下一层分程序
 
-                if (sym.symtype == Symbol.type.semicolon.val()) {                          //<过程说明部分> 识别成功
+                if (sym.symtype == Symbol.type.semicolon.val()) {
 
                     getsym();
                     //FIRST(statement)={begin call if while repeat null };
-                    nxtset = (BitSet) statebegSyms.clone();                     //语句的FIRST集合
+                    nxtset = (BitSet) statebegSyms.clone();                                 // 语句的FIRST集合
                     //FOLLOW(嵌套分程序)={ ident , procedure }
                     nxtset.set(Symbol.type.ident.val());
                     nxtset.set(Symbol.type.procsym.val());
-                    test(nxtset, fsys, 6);                             // 测试symtype属于FIRST(statement),
+                    test(nxtset, fsys, 6);
                 } else {
-                    PL0Exception.handle(5, err, scan);                                    //     漏了逗号或者分号
+                    PL0Exception.handle(5, err, scan);                                      // 漏了逗号或者分号
                 }
             }
 
             nxtset = (BitSet) statebegSyms.clone();
             //FIRST(statement)={ ident }
             nxtset.set(Symbol.type.ident.val());
-            test(nxtset, declbegSyms, 7);                           //7:应为语句
+            test(nxtset, declbegSyms, 7);                                                    //7:应为语句
             //FIRST(declaration)={const var procedure null };
-        } while (declbegSyms.get(sym.symtype));                     //直到没有声明符号
+        } while (declbegSyms.get(sym.symtype));                                             //直到没有声明符号
 
-        //开始生成当前过程代码
         /**
          * 分程序声明部分完成后，即将进入语句的处理， 这时的代码分配指针cx的值正好指向语句的开始位置，
          * 这个位置正是前面的jmp指令需要跳转到的位置
          */
         SymbolTable.record item = table.at(tx0);
+        if(pcodeVM.code[item.adr] == null){
+            pcodeVM.code[item.adr] = new Pcode(0,0,0);
+        }
         pcodeVM.code[item.adr].a = pcodeVM.cx;                         //过程入口地址填写在code中的jmp 的a参数里
         item.adr = pcodeVM.cx;                                        //当前过程代码地址
         item.size = dx;                                               //dx: 一个procedure中的变量数目+3 ，声明部分中每增加一条声明都会给dx+1
@@ -571,8 +568,6 @@ public class Parser {
 
     /**
      * <读语句> ::= read '(' <标识符> { , <标识符> } ')'
-     * 第一条是16号操作的opr指令， 实现从标准输入设备上读一个整数值，放在数据栈顶。 第二条是sto指令，
-     * 把栈顶的值存入read语句括号中的变量所在的单元
      *
      * @param fsys FOLLOW集合
      * @param lev 当前层次

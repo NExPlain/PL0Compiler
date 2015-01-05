@@ -62,7 +62,9 @@ public class Error {
         };
 
     public void outputErrMessage(int errID, int lineNumber, int cc){
-        String name = PL0.parser.sym.name;
+        String name = "";
+        if(PL0.parser.sym != null)
+            name = PL0.parser.sym.name;
         if(redabundant(name,errID))return;
         if(errCnt > errMaxCnt){
             String errMessage = "****";

@@ -5,7 +5,7 @@ package pl0compiler;
  */
 public class Main {
 
-    public static PL0 pl0 = new PL0(PL0.inputFile);
+    public static PL0 pl0 = new PL0();
     public static void main(String args[]){
         pl0.compile();
     }

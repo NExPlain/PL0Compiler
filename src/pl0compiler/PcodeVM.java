@@ -14,7 +14,6 @@ public class PcodeVM {
     //存放虚拟机代码的数组
     public Pcode[] code;
 
-
     public PcodeVM() {
         code = new Pcode[cxmax];
         cx = 0;
@@ -28,13 +27,12 @@ public class PcodeVM {
      * @param a Pcodeuction.a
      */
     public void gen(int f, int l, int a) throws PL0Exception {
-        if(PL0.scan.isfileEneded)return;
+        if(PL0.parser.scan.isfileEneded)return;
         if (cx >= cxmax) {                                                                          //超出堆栈的上限
             throw new PL0Exception(38);
         }
         code[cx++] = new Pcode(f, l, a);
     }
-
 
     /**
      * 输出pcode符号表
