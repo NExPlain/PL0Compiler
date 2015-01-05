@@ -59,7 +59,7 @@ public class Scanner {
                 do {
                     Buffer = cin.readLine();
                     if(Buffer == null){
-                       // Error.outputErrMessage(36, lineNumber, 0);                TODO finish program incomplete
+                        PL0.parser.err.outputErrMessage(36, lineNumber, cc);              //  TODO finish program incomplete
                         isfileEneded = true;
                         return ch = '\0';
                     }
