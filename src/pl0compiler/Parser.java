@@ -10,7 +10,7 @@ import java.util.BitSet;
 public class Parser {
     /*说明和语句分别处理*/
     public Symbol sym;     //当前的符号
-    public Scanner lex;    //词法分析器
+    public Scanner scan;    //词法分析器
     public SymbolTable table;  //符号表
     public PcodeVM pcodeVM;  //虚拟机指令
     public Error err;
@@ -25,8 +25,8 @@ public class Parser {
      */
     public int dx = 0;
 
-    public Parser(Scanner lex, SymbolTable table, PcodeVM pcodeVM){
-        this.lex = lex;
+    public Parser(Scanner scan, SymbolTable table, PcodeVM pcodeVM){
+        this.scan = scan;
         this.table = table;
         this.pcodeVM = pcodeVM;
         this.err = new Error();
@@ -66,10 +66,10 @@ public class Parser {
      */
     public void getsym(){
         try {
-            sym = lex.getsym();
+            sym = scan.getsym();
         } catch (PL0Exception e) {
             sym = new Symbol(Symbol.type.nul.val());
-            e.handle(err,lex);
+            e.handle(err, scan);
         }
     }
 
@@ -82,7 +82,7 @@ public class Parser {
      */
     void test(BitSet s1, BitSet s2, int n) {
         if (!s1.get(sym.symtype)) {
-            PL0Exception.handle(n, err, lex);
+            PL0Exception.handle(n, err, scan);
             s1.or(s2);
             while (!s1.get(sym.symtype) && sym.symtype != Symbol.type.nul.val()) {
                 getsym();
@@ -102,7 +102,7 @@ public class Parser {
         block(0, fsys);                                               // 解析<分程序>
 
         if(sym.symtype != Symbol.type.period.val()){
-            PL0Exception.handle(9, err, lex);
+            PL0Exception.handle(9, err, scan);
         }
     }
 
@@ -131,12 +131,12 @@ public class Parser {
         try {
             pcodeVM.gen(Pcode.JMP, 0, 0);
         } catch (PL0Exception e) {
-            e.handle(err, lex);
+            e.handle(err, scan);
         }
 
         if (lev > SymbolTable.levMax) //必须先判断嵌套层层数
         {
-            PL0Exception.handle(31, err, lex);                                          // error 31: 嵌套层数过大
+            PL0Exception.handle(31, err, scan);                                          // error 31: 嵌套层数过大
         }
         do {
             //分析<说明部分>
@@ -153,7 +153,7 @@ public class Parser {
                     {
                         getsym();
                     } else {
-                        PL0Exception.handle(5, err, lex);                                     //漏了逗号或者分号
+                        PL0Exception.handle(5, err, scan);                                     //漏了逗号或者分号
                     }
                 }while(sym.symtype == Symbol.type.ident.val());
             }
@@ -171,7 +171,7 @@ public class Parser {
                     {
                         getsym();
                     } else {
-                        PL0Exception.handle(5, err, lex);                                       // error 5: 漏了逗号或者分号
+                        PL0Exception.handle(5, err, scan);                                       // error 5: 漏了逗号或者分号
                     }
                 }while(sym.symtype == Symbol.type.ident.val());
             }
@@ -184,21 +184,22 @@ public class Parser {
                 getsym();
                 if (sym.symtype == Symbol.type.ident.val()) {                      //填写符号表
                     try {
-                        table.enter(sym, SymbolTable.Kind.procedure, lev, this);
+                        table.enter(sym, SymbolTable.kind.procedure, lev, this);
                     }catch (PL0Exception e){
-                        e.handle(err, lex);
+                        e.handle(err, scan);
                     }
                     getsym();
                 } else {
-                    PL0Exception.handle(4, err, lex);                                     // error 4: procedure后应为标识符
+                    PL0Exception.handle(4, err, scan);                                     // error 4: procedure后应为标识符
                 }
                 if (sym.symtype == Symbol.type.semicolon.val())               //分号，表示<过程首部>结束
                 {
                     getsym();
                 } else {
-                    PL0Exception.handle(5, err, lex);                                     // error 5: 漏了逗号或者分号
+                    PL0Exception.handle(5, err, scan);                                     // error 5: 漏了逗号或者分号
                 }
                 nxtset = (BitSet) fsys.clone();                      //当前模块(block)的FOLLOW集合
+
                 //FOLLOW(block)={ ; }
                 nxtset.set(Symbol.type.semicolon.val());
                 block(lev + 1, nxtset);                                  //嵌套层次+1，分析分程序
@@ -213,14 +214,10 @@ public class Parser {
                     nxtset.set(Symbol.type.procsym.val());
                     test(nxtset, fsys, 6);                             // 测试symtype属于FIRST(statement),
                 } else {
-                    PL0Exception.handle(5, err, lex);                                    //     漏了逗号或者分号
+                    PL0Exception.handle(5, err, scan);                                    //     漏了逗号或者分号
                 }
             }
 
-            /**
-             * FIRST(statement)={begin call if while repeat null };
-             * FIRST(declaration)={const var procedure null };
-             */
             nxtset = (BitSet) statebegSyms.clone();
             //FIRST(statement)={ ident }
             nxtset.set(Symbol.type.ident.val());
@@ -249,7 +246,7 @@ public class Parser {
         try {
             pcodeVM.gen(Pcode.INT, 0, dx);
         } catch (PL0Exception e) {
-            e.handle(err, lex);
+            e.handle(err, scan);
         }
 
         //分析<语句>
@@ -265,11 +262,13 @@ public class Parser {
         try {
             pcodeVM.gen(Pcode.OPR, 0, 0);                                                   //每个过程出口都要使用的释放数据段指令
         } catch (PL0Exception e) {
-            e.handle(err, lex);
+            e.handle(err, scan);
         }
 
         nxtset = new BitSet(Symbol.symbolNumber);                                           //分程序没有补救集合
         test(fsys, nxtset, 8);                                                              //检测后跟符号正确性
+
+        pcodeVM.listcode(cx0);
 
         dx = dx0;                                                                           //恢复堆栈帧计数器
         table.tx = tx0;                                                                     //回复名字表位置
@@ -288,26 +287,26 @@ public class Parser {
             getsym();
             if(sym.symtype == Symbol.type.eql.val() || sym.symtype == Symbol.type.becomes.val()){     // 等于或者赋值符号
                 if(sym.symtype == Symbol.type.becomes.val()){
-                    PL0Exception.handle(1, err, lex);  // error 1: 应是=而不是:=
+                    PL0Exception.handle(1, err, scan);  // error 1: 应是=而不是:=
                 }
                 getsym();                                    // 自动纠正，将:=纠错为=
                 if(sym.symtype == Symbol.type.number.val()){
                     sym.content = sym.name;
                     sym.name = constName;
                     try {
-                        table.enter(sym, SymbolTable.Kind.constant, lev, this);       //将该常量输入符号表中
+                        table.enter(sym, SymbolTable.kind.constant, lev, this);       //将该常量输入符号表中
                         getsym();
                     } catch (PL0Exception e) {
-                        e.handle(err, lex);
+                        e.handle(err, scan);
                     }
                 }else{
-                    PL0Exception.handle(2 , err, lex);            // error 2: 常量=后应为数字
+                    PL0Exception.handle(2 , err, scan);            // error 2: 常量=后应为数字
                 }
             } else{
-                PL0Exception.handle(3, err, lex);               // error 3: 常量说明符后应为=
+                PL0Exception.handle(3, err, scan);               // error 3: 常量说明符后应为=
             }
         }else{
-            PL0Exception.handle(4, err, lex);                    // error 4: const后应接标识符
+            PL0Exception.handle(4, err, scan);                    // error 4: const后应接标识符
         }
     }
 
@@ -320,13 +319,13 @@ public class Parser {
     void vardeclaration(int lev){
         if(sym.symtype == Symbol.type.ident.val()){
             try {
-                table.enter(sym, SymbolTable.Kind.variable, lev, this);
+                table.enter(sym, SymbolTable.kind.variable, lev, this);
             } catch (PL0Exception e) {
-                e.handle(err, lex);
+                e.handle(err, scan);
             }
             getsym();
         }else{
-            PL0Exception.handle(4, err, lex);            // error 4: const, var, procedure 后应为标识符
+            PL0Exception.handle(4, err, scan);            // error 4: const, var, procedure 后应为标识符
         }
     }
 
@@ -368,28 +367,27 @@ public class Parser {
      * @param lev 当前层次
      */
     private void parseAssignStatement(BitSet fsys, int lev) {
-        int index = table.position(sym.name);
-        if (index > 0) {
-            SymbolTable.record record = table.at(index);
-            if (record.kind == SymbolTable.Kind.variable) {                                      // 变量
-                getsym();
-                if (sym.symtype == Symbol.type.becomes.val()) {
-                    getsym();
-                } else {
-                    PL0Exception.handle(13, err, lex);                                    //error 13: 应为赋值运算符:=
-                }
-                BitSet nxtlev = (BitSet) fsys.clone();
-                expression(nxtlev, lev);                                                         //表达式
-                try {
-                    pcodeVM.gen(Pcode.STO, lev - record.level, record.adr);                          // 计算结果保留在栈顶
-                } catch (PL0Exception e) {
-                    e.handle(err, lex);
-                }
-            } else {
-                PL0Exception.handle(12, err, lex);                                        // error 12: giving value to non-variation
+        int i = table.position(sym.name);
+        if(i == 0){
+            PL0Exception.handle(11, err, scan);
+        }else if(table.at(i).kind != SymbolTable.kind.variable){
+            PL0Exception.handle(12, err, scan);
+            i = 0;
+        }
+        getsym();
+        if(sym.symtype == Symbol.type.becomes.val()){
+            getsym();
+        }else{
+            PL0Exception.handle(13, err, scan);
+        }
+        expression(fsys, lev);
+        if(i != 0){
+            try {
+                SymbolTable.record record = table.at(i);
+                pcodeVM.gen(Pcode.STO, lev - record.level, record.adr);
+            } catch (PL0Exception e) {
+                e.handle(err, scan);
             }
-        } else {
-            PL0Exception.handle(11, err, lex);                                            // error 11: 标识符未说明
         }
     }
 
@@ -407,22 +405,22 @@ public class Parser {
             int index = table.position(sym.name);
             if (index != 0) {
                 SymbolTable.record item = table.at(index);
-                if (item.kind == SymbolTable.Kind.procedure)                 //检查该标识符的类型是否为procedure
+                if (item.kind == SymbolTable.kind.procedure)                 //检查该标识符的类型是否为procedure
                 {
                     try {
                         pcodeVM.gen(Pcode.CAL, lev - item.level, item.adr);
                     } catch (PL0Exception e) {
-                        e.handle(err,lex);
+                        e.handle(err, scan);
                     }
                 } else {
-                    PL0Exception.handle(15, err, lex);                                        //error 15: 不可调用常量或变量
+                    PL0Exception.handle(15, err, scan);                                        //error 15: 不可调用常量或变量
                 }
             } else {
-                PL0Exception.handle(11, err, lex);                                             //error 11: 过程调用未找到
+                PL0Exception.handle(11, err, scan);                                             //error 11: 过程调用未找到
             }
             getsym();
         } else {
-            PL0Exception.handle(14, err, lex);                                               //error 14: call后应为标识符
+            PL0Exception.handle(14, err, scan);                                               //error 14: call后应为标识符
         }
     }
 
@@ -444,13 +442,13 @@ public class Parser {
         if (sym.symtype == Symbol.type.thensym.val()) {
             getsym();
         } else {
-            PL0Exception.handle(16, err, lex);                               //error 16: 应为then
+            PL0Exception.handle(16, err, scan);                               //error 16: 应为then
         }
         int cx1 = pcodeVM.cx;                                                        //保存当前指令地址
         try {
             pcodeVM.gen(Pcode.JPC, 0, 0);                                                 //生成条件跳转指令，跳转地址位置，暂时写0
         } catch (PL0Exception e) {
-            e.handle(err,lex);
+            e.handle(err, scan);
         }
         statement(fsys, lev);                                                        //处理then后的statement
         pcodeVM.code[cx1].a = pcodeVM.cx;                                             //经statement处理后，cx为then后语句执行
@@ -462,7 +460,7 @@ public class Parser {
             try {
                 pcodeVM.gen(Pcode.JMP, 0, 0);
             } catch (PL0Exception e) {
-                e.handle(err,lex);
+                e.handle(err, scan);
             }
             statement(fsys, lev);
             pcodeVM.code[cx1].a = pcodeVM.cx;
@@ -484,7 +482,7 @@ public class Parser {
             if(sym.symtype == Symbol.type.semicolon.val()){
                 getsym();
             } else {
-                PL0Exception.handle(10, err, lex);           // error 10: 语句之间漏分号
+                PL0Exception.handle(10, err, scan);           // error 10: 语句之间漏分号
             }
             statement(nxtlev, lev);
         }
@@ -494,10 +492,10 @@ public class Parser {
             try {
                 pcodeVM.gen(Pcode.JPC, 0, cx1);
             } catch (PL0Exception e) {
-                e.handle(err,lex);
+                e.handle(err, scan);
             }
         }else{
-            PL0Exception.handle(32, err, lex);
+            PL0Exception.handle(32, err, scan);
         }
     }
 
@@ -523,18 +521,18 @@ public class Parser {
         try {
             pcodeVM.gen(Pcode.JPC, 0, 0);                               //条件跳转
         } catch (PL0Exception e) {
-            e.handle(err, lex);
+            e.handle(err, scan);
         }
         if (sym.symtype == Symbol.type.dosym.val()) {
             getsym();
         } else {
-            PL0Exception.handle(18, err, lex);                         //error 18: 应为do
+            PL0Exception.handle(18, err, scan);                         //error 18: 应为do
         }
         statement(fsys, lev);                                          //分析<语句>
         try {
             pcodeVM.gen(Pcode.JMP, 0, cx1);
         } catch (PL0Exception e) {
-            e.handle(err, lex);
+            e.handle(err, scan);
         }
         pcodeVM.code[cx2].a = pcodeVM.cx;                                //反填跳出循环的地址，与<条件语句>类似
     }
@@ -558,7 +556,7 @@ public class Parser {
             if (sym.symtype == Symbol.type.semicolon.val()) {
                 getsym();
             } else {
-                PL0Exception.handle(10, err, lex);                                    // error 10: 语句之间漏分号
+                PL0Exception.handle(10, err, scan);                                    // error 10: 语句之间漏分号
             }
             statement(nxtlev, lev);
         }
@@ -566,7 +564,7 @@ public class Parser {
         {
             getsym();
         } else {
-            PL0Exception.handle(17, err, lex);                                                  //应为分号或者end
+            PL0Exception.handle(17, err, scan);                                                  //应为分号或者end
         }
     }
 
@@ -588,29 +586,29 @@ public class Parser {
                 if (sym.symtype == Symbol.type.ident.val()) {
                     index = table.position(sym.name);
                     if (index == 0) {
-                        PL0Exception.handle(11, err, lex);                              //error 11: 标识符未声明
+                        PL0Exception.handle(11, err, scan);                              //error 11: 标识符未声明
                     } else {
                         SymbolTable.record record = table.at(index);
-                        if (record.kind != SymbolTable.Kind.variable) {
-                            PL0Exception.handle(33, err, lex);                                       //read()中的标识符不是变量
+                        if (record.kind != SymbolTable.kind.variable) {
+                            PL0Exception.handle(33, err, scan);                          //read()中的标识符不是变量
                         } else {
                             try {
                                 pcodeVM.gen(Pcode.RED, lev - record.level, record.adr);
                             } catch (PL0Exception e) {
-                                e.handle(err,lex);
+                                e.handle(err, scan);
                             }
                         }
                     }
                 }else{
-                    PL0Exception.handle(4, err, lex);
+                    PL0Exception.handle(4, err, scan);
                 }
                 getsym();
             } while (sym.symtype == Symbol.type.comma.val());
         } else {
-            PL0Exception.handle(26, err, lex);                                             // error 26: 应为左括号
+            PL0Exception.handle(26, err, scan);                                             // error 26: 应为左括号
         }
         if(sym.symtype != Symbol.type.rparen.val()){
-            PL0Exception.handle(22, err, lex);                                              // error 22: 应为右括号
+            PL0Exception.handle(22, err, scan);                                              // error 22: 应为右括号
         }else {
             getsym();
         }
@@ -637,16 +635,16 @@ public class Parser {
                 try {
                     pcodeVM.gen(Pcode.WRT, 0, 0);
                 } catch (PL0Exception e) {
-                    e.handle(err,lex);
+                    e.handle(err, scan);
                 }
             } while (sym.symtype == Symbol.type.comma.val());
             if(sym.symtype != Symbol.type.rparen.val()){
-                PL0Exception.handle(22, err, lex);                                              // error 22: 应为右括号
+                PL0Exception.handle(22, err, scan);                                              // error 22: 应为右括号
             }else {
                 getsym();
             }
         } else {
-            PL0Exception.handle(26, err, lex);                                                  // error 26: 应为左括号
+            PL0Exception.handle(26, err, scan);                                                  // error 26: 应为左括号
         }
     }
 
@@ -660,7 +658,6 @@ public class Parser {
      */
     private void term(BitSet fsys, int lev) {
         BitSet nxtset = (BitSet) fsys.clone();
-        //FOLLOW(factor)={ * /}
 
         nxtset.set(Symbol.type.times.val());
         nxtset.set(Symbol.type.slash.val());
@@ -675,13 +672,13 @@ public class Parser {
                 try {
                     pcodeVM.gen(Pcode.OPR, 0, 4);
                 } catch (PL0Exception e) {
-                    e.handle(err,lex);
+                    e.handle(err, scan);
                 }
             }else{
                 try {
                     pcodeVM.gen(Pcode.OPR, 0, 5);
                 } catch (PL0Exception e) {
-                    e.handle(err,lex);
+                    e.handle(err, scan);
                 }
             }
         }
@@ -701,35 +698,35 @@ public class Parser {
                 int index = table.position(sym.name);
                 if (index > 0) {
                     SymbolTable.record record = table.at(index);
-                    if(record.kind == SymbolTable.Kind.constant){
+                    if(record.kind == SymbolTable.kind.constant){
                         try {
                             pcodeVM.gen(Pcode.LIT, 0, record.value);                     //生成lit指令，把这个数值字面常量放到栈顶
                         } catch (PL0Exception e) {
-                            e.handle(err,lex);
+                            e.handle(err, scan);
                         }
-                    }else if(record.kind == SymbolTable.Kind.variable){
+                    }else if(record.kind == SymbolTable.kind.variable){
                         try {
                             pcodeVM.gen(Pcode.LOD, lev - record.level, record.adr);     //取变量放在栈顶
                         } catch (PL0Exception e) {
-                            e.handle(err,lex);
+                            e.handle(err, scan);
                         }
-                    }else if(record.kind == SymbolTable.Kind.procedure){
-                        PL0Exception.handle(21, err, lex);               //表达式内不可有过程标识符
+                    }else if(record.kind == SymbolTable.kind.procedure){
+                        PL0Exception.handle(21, err, scan);               //表达式内不可有过程标识符
                     }
                 } else {
-                    PL0Exception.handle(11, err, lex);
+                    PL0Exception.handle(11, err, scan);
                 }
                 getsym();
             } else if (sym.symtype == Symbol.type.number.val()) {               //因子为数
                 int num = Integer.parseInt(sym.name);
                 if (num > SymbolTable.addrMax) {
-                    PL0Exception.handle(34, err, lex);
+                    PL0Exception.handle(34, err, scan);
                     num = 0;
                 }
                 try {
                     pcodeVM.gen(Pcode.LIT, 0, num);
                 } catch (PL0Exception e) {
-                    e.handle(err,lex);
+                    e.handle(err, scan);
                 }
                 getsym();
             } else if (sym.symtype == Symbol.type.lparen.val()) {                 //因子为表达式：'('<表达式>')'
@@ -740,7 +737,7 @@ public class Parser {
                 if (sym.symtype == Symbol.type.rparen.val()) {
                     getsym();
                 } else {
-                    PL0Exception.handle(22, err, lex);                                   //漏右括号
+                    PL0Exception.handle(22, err, scan);                                   //漏右括号
                 }
             }
             BitSet nxtSet = new BitSet(1);
@@ -770,7 +767,7 @@ public class Parser {
                 try {
                     pcodeVM.gen(Pcode.OPR, 0, 1);
                 } catch (PL0Exception e) {
-                    e.handle(err, lex);
+                    e.handle(err, scan);
                 }
             }
         } else {
@@ -785,13 +782,13 @@ public class Parser {
                 try {
                     pcodeVM.gen(Pcode.OPR, 0, 2);
                 } catch (PL0Exception e) {
-                    e.handle(err,lex);
+                    e.handle(err, scan);
                 }
             else
                 try {
                     pcodeVM.gen(Pcode.OPR, 0, 3);
                 } catch (PL0Exception e) {
-                    e.handle(err, lex);
+                    e.handle(err, scan);
                 }
         }
     }
@@ -810,7 +807,7 @@ public class Parser {
             try {
                 pcodeVM.gen(Pcode.OPR, 0, 6);                                //OPR 0 6:判断栈顶元素的odd属性
             } catch (PL0Exception e) {
-                e.handle(err, lex);
+                e.handle(err, scan);
             }
         } else {
             BitSet nxtset = new BitSet();
@@ -846,10 +843,10 @@ public class Parser {
                 try {
                     pcodeVM.gen(Pcode.OPR, 0, reloptype);
                 } catch (PL0Exception e) {
-                    e.handle(err, lex);
+                    e.handle(err, scan);
                 }
             } else {
-                PL0Exception.handle(20, err, lex);                                                                              //应为关系运算符
+                PL0Exception.handle(20, err, scan);                                                                              //应为关系运算符
             }
         }
     }

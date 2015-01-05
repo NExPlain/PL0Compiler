@@ -9,10 +9,12 @@ public class PL0Exception extends Exception{
         super();
         this.errType = errType;
     }
-    public static void handle(int errType, Error err, Scanner lex){
-        err.outputErrMessage(errType, lex.lineNumber, lex.cc);
+    public static void handle(int errType, Error err, Scanner scan){
+        if(scan.isfileEneded)return;
+        err.outputErrMessage(errType, scan.lineNumber, scan.getcc());
     }
-    void handle(Error err, Scanner lex){
-        err.outputErrMessage(errType, lex.lineNumber, lex.cc);
+    void handle(Error err, Scanner scan){
+        if(scan.isfileEneded)return;
+        err.outputErrMessage(errType, scan.lineNumber, scan.getcc());
     }
 }

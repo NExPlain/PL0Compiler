@@ -15,12 +15,13 @@ import java.util.Arrays;
 
 public class Scanner {
 
-    public final static int numMax = 14;        //数字的最大位数
+    public final static int numMax = 14;        // maximum length of numbers
     public final static int al = 10;            // maximum length of identifiers
-    public int cc;
+    private int cc;
+    private int ccbuf;
     public int lineNumber;
     public char ch;
-    private  boolean fileEneded;
+    public boolean isfileEneded;
     String Buffer;
     private BufferedReader cin;
 
@@ -31,18 +32,22 @@ public class Scanner {
             ex.printStackTrace();
             System.out.println("File not found!");
         }
-        fileEneded = false;
+        isfileEneded = false;
         Buffer = "";
         lineNumber = 0;
-        cc = 0;
+        cc = ccbuf = 0;
+        ccbuf = 0;
     }
 
+    public int getcc(){
+        return cc + ccbuf - 1;
+    }
     /**
      * 读取一个字符，'\0'表示已读到文件末尾
      * @return 返回当前获取到的字符
      */
     public char getch() {
-        if(fileEneded == true){
+        if(isfileEneded == true){
             return ch = '\0';
         }
         if (cc == Buffer.length()) {
@@ -51,11 +56,10 @@ public class Scanner {
                     Buffer = cin.readLine();
                     if(Buffer == null){
                         Error.outputErrMessage(36, lineNumber);
-                        fileEneded = true;
+                        isfileEneded = true;
                         return ch = '\0';
                     }
                     lineNumber++;
-                    Buffer.trim();                                  // 去除多余的空格
                     PL0.outputWriter.write("    " + Buffer + "\n");
                     PL0.outputWriter.flush();                       // 把读入的源程序同时输出到output文件上
                 } while (Buffer.equals(""));
@@ -65,7 +69,7 @@ public class Scanner {
             }
             Buffer += " ";                                         // 加一个空格表示到达行末尾，与下一行的开头分开
             System.out.println("    "+Buffer);
-            cc = 0;
+            cc = ccbuf = 0;
         }
         if(cc < Buffer.length())ch = Buffer.charAt(cc++);
         else ch = ' ';
@@ -101,6 +105,9 @@ public class Scanner {
     public Symbol getsym() throws PL0Exception {
         Symbol currentSym = new Symbol(Symbol.type.nul.val());
         while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\u0010') {
+            if(ch == '\t'){
+                ccbuf += 3;
+            }
             getch();
         }
         if(ch == '\0'){
@@ -173,14 +180,14 @@ public class Scanner {
     private Symbol WorkReservedWords() {
         StringBuffer str = new StringBuffer();
         do {
-            if(str.length() < al)           // if the length of token haven't reach the max
+            if(str.length() < al)
                 str.append(ch);
             getch();
         } while (isDigit(ch) || isAlpha(ch));
         String token = str.toString();
 
-        int idx = Arrays.binarySearch(Symbol.usedWords, token);             // TODO extends change to HashTable?
         Symbol sym;
+        int idx = Arrays.binarySearch(Symbol.usedWords, token);
         if (idx >= 0) {
             sym = new Symbol(Symbol.usedWordsId[idx]);  // 保留字
         } else {

@@ -56,7 +56,15 @@ public class Error {
         };
 
     public static void outputErrMessage(int errID, int lineNumber, int cc){
-        if(errCnt > errMaxCnt){               // todo debugging message
+        if(errCnt > errMaxCnt){
+            String errMessage = "****";
+            errMessage += "编译错误达到上限！";
+            System.out.println(errMessage);
+            try {
+                PL0.outputWriter.write(errMessage + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return;
         }
         String errMessage = "****";

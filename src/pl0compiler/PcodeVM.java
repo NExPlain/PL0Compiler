@@ -28,6 +28,7 @@ public class PcodeVM {
      * @param a Pcodeuction.a
      */
     public void gen(int f, int l, int a) throws PL0Exception {
+        if(PL0.scan.isfileEneded)return;
         if (cx >= cxmax) {                                                                          //超出堆栈的上限
             throw new PL0Exception(38);
         }

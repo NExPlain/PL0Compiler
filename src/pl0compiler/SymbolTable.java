@@ -22,14 +22,14 @@ public class SymbolTable {
         tx = 0;
         tab = new record[MaxTableSize];
     }
-    public static enum Kind {
+    public static enum kind {
         constant(0),
         variable(1),
         procedure(2);
 
         private int enumValue;
 
-        private Kind(int enumValue) {
+        private kind(int enumValue) {
             this.enumValue = enumValue;
         }
 
@@ -40,13 +40,13 @@ public class SymbolTable {
 
     public class record {
         String name;            // 名字
-        Kind kind;                // 种类(constant, variable, procedure)
+        SymbolTable.kind kind;                // 种类(constant, variable, procedure)
         int value;                // 值，当kind为常量时
         int level;                // 嵌套层次
         int adr;                 // 地址，当kind为常量或过程时
         int size;               // 该item的大小
 
-        public record(String name, Kind kind, int value, int level, int adr) {
+        public record(String name, SymbolTable.kind kind, int value, int level, int adr) {
             this.name = name;
             this.kind = kind;
             this.value = value;
@@ -109,7 +109,7 @@ public class SymbolTable {
      * @return
      * @throws Exception
      */
-    public void enter(Symbol sym, Kind kind, int level, Parser parser) throws PL0Exception {
+    public void enter(Symbol sym, kind kind, int level, Parser parser) throws PL0Exception {
         if (tx == MaxTableSize){
             throw new PL0Exception(39);     // 符号表溢出
         }
@@ -122,14 +122,14 @@ public class SymbolTable {
         record record = new record();
         record.name = sym.name;
         record.kind = kind;
-        if(kind.val() == Kind.constant.val()){                                          // 常量
+        if(kind.val() == SymbolTable.kind.constant.val()){                                          // 常量
             record.value = Integer.parseInt(sym.content);                               // const 变量不需要level
-        }else if(kind.val() == Kind.variable.val()){                                    // 变量
+        }else if(kind.val() == SymbolTable.kind.variable.val()){                                    // 变量
             record.level = level;
             if(record.adr == 0)
                 record.adr = parser.dx;                                                 // 相对此过程的偏移量
             parser.dx = parser.dx + 1;
-        }else if(kind.val() == Kind.procedure.val()){   // 过程名
+        }else if(kind.val() == SymbolTable.kind.procedure.val()){   // 过程名
             record.level = level;
             record.adr = 0;
         }else{
@@ -156,11 +156,11 @@ public class SymbolTable {
         for (int i = start; i <= tx; i++) {
             try {
                 String msg = "table error !";
-                if(tab[i].kind == Kind.constant){
+                if(tab[i].kind == kind.constant){
                     msg = i + "  const: " + tab[i].name + "  val: " + tab[i].value;
-                }else if(tab[i].kind == Kind.variable){
+                }else if(tab[i].kind == kind.variable){
                     msg = i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].adr;
-                }else if(tab[i].kind == Kind.procedure){
+                }else if(tab[i].kind == kind.procedure){
                     msg = i + " proc: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].size;
                 }
                 System.out.println(msg);

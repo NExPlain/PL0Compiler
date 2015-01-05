@@ -32,7 +32,7 @@ public class PL0 {
             tableWriter = new BufferedWriter(new FileWriter(tableFile));
             outputWriter = new BufferedWriter(new FileWriter(runtimeFile));
             errWriter = new BufferedWriter(new FileWriter(errFile));
-            parser.lex.getch();
+            parser.scan.getch();
             parser.getsym();                                      //前瞻分析需要预先读入一个符号
             parser.start();                                        //开始语法分析过程（连同语法检查，目标代码生成）
         } catch (Exception e) {
@@ -47,7 +47,6 @@ public class PL0 {
                 e.printStackTrace();
             }
         }
-        parser.pcodeVM.listcode(0);
         try{
             pcodeWriter.close();
             tableWriter.close();
