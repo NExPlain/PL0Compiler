@@ -693,7 +693,7 @@ public class Parser {
      */
     private void factor(BitSet fsys, int lev) {
         test(facbegSyms, fsys, 24);                                                 // ERROR 24: 表达式不能以此符号开始
-        if (facbegSyms.get(sym.symtype)) {                                          // todo 这边while真的大丈夫么
+        if (facbegSyms.get(sym.symtype)) {
             if (sym.symtype == Symbol.type.ident.val()) {
                 int index = table.position(sym.name);
                 if (index > 0) {
@@ -846,7 +846,7 @@ public class Parser {
                     e.handle(err, scan);
                 }
             } else {
-                PL0Exception.handle(20, err, scan);                                                                              //应为关系运算符
+                PL0Exception.handle(20, err, scan);                                 //应为关系运算符
             }
         }
     }

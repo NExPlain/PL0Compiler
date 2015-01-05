@@ -1,5 +1,7 @@
 package pl0compiler;
 
+import sun.jvm.hotspot.debugger.cdbg.Sym;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -187,10 +189,10 @@ public class Scanner {
         String token = str.toString();
 
         Symbol sym;
-        int idx = Arrays.binarySearch(Symbol.usedWords, token);
-        if (idx >= 0) {
-            sym = new Symbol(Symbol.usedWordsId[idx]);  // 保留字
-        } else {
+        Object idx = Symbol.reservedWords.get(token);
+        if(idx != null){
+            sym = new Symbol((Integer)idx);
+        }else{
             sym = new Symbol(Symbol.type.ident.val());  // 一般标识符
             sym.name = token;
         }

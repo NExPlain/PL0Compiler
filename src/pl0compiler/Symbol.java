@@ -10,33 +10,8 @@ import java.util.HashMap;
 public class Symbol {
 
     public static final int symbolNumber = 35;
-    // 保留字对应的符号值
-    public static final int[] usedWordsId = new int[]{
-            type.beginsym.val(),
-            type.callsym.val(),
-            type.constsym.val(),
-            type.dosym.val(),
-            type.elsesym.val(),
-            type.endsym.val(),
-            type.ifsym.val(),
-            type.oddsym.val(),
-            type.procsym.val(),
-            type.readsym.val(),
-            type.repeatsym.val(),
-            type.thensym.val(),
-            type.untilsym.val(),
-            type.varsym.val(),
-            type.whilesym.val(),
-            type.writesym.val()
-    };
 
-    // 保留字名字的存放(排序后)
-    public static String[] usedWords = new String[]{
-            "begin", "call", "const", "do",
-            "else", "end", "if", "odd",
-            "procedure", "read", "repeat", "then",
-            "until", "var", "while", "write"};
-
+    public static final HashMap<String, Integer> reservedWords;      // 存放字符名 -> 标号的键值对
     public static final HashMap<Character, Integer> operatorToIdx;   // 存放运算符的符号 --> 对应type id的map
 
     static {
@@ -51,6 +26,24 @@ public class Symbol {
         operatorToIdx.put(',', type.comma.val());
         operatorToIdx.put('.', type.period.val());
         operatorToIdx.put(';', type.semicolon.val());
+
+        reservedWords = new HashMap<String, Integer>();
+        reservedWords.put("begin",type.beginsym.val());
+        reservedWords.put("call",type.callsym.val());
+        reservedWords.put("const",type.constsym.val());
+        reservedWords.put("do",type.dosym.val());
+        reservedWords.put("else",type.elsesym.val());
+        reservedWords.put("end",type.endsym.val());
+        reservedWords.put("if",type.ifsym.val());
+        reservedWords.put("odd",type.oddsym.val());
+        reservedWords.put("procedure",type.procsym.val());
+        reservedWords.put("read",type.readsym.val());
+        reservedWords.put("repeat",type.repeatsym.val());
+        reservedWords.put("then",type.thensym.val());
+        reservedWords.put("until",type.untilsym.val());
+        reservedWords.put("var",type.varsym.val());
+        reservedWords.put("while",type.whilesym.val());
+        reservedWords.put("write",type.writesym.val());
     }
 
     public String name;
