@@ -1,14 +1,20 @@
 package pl0compiler;
 
+import javafx.util.Pair;
+
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * Created by lizhen on 14/12/3.
  */
 public class Error {
+
+    private HashMap<javafx.util.Pair<String,Integer>, Integer> rem;
     private static final int errMaxCnt = 100;
     public Error(){
             errCnt = 0;
+            rem = new HashMap<Pair<String, Integer>, Integer>();
     }
     public static int errCnt = 0;
     public static final String[] errorInfo = new String[]{
@@ -55,7 +61,9 @@ public class Error {
             "39.符号表溢出错误",
         };
 
-    public static void outputErrMessage(int errID, int lineNumber, int cc){
+    public void outputErrMessage(int errID, int lineNumber, int cc){
+        String name = PL0.parser.sym.name;
+        if(redabundant(name,errID))return;
         if(errCnt > errMaxCnt){
             String errMessage = "****";
             errMessage += "编译错误达到上限！";
@@ -79,17 +87,22 @@ public class Error {
             e.printStackTrace();
         }
         errCnt ++ ;
-        outputErrMessage(errID, lineNumber);
-    }
-
-
-    public static void outputErrMessage(int errID, int lineNumber){
-        String errMessage = "Error Message at " + " Line " + lineNumber + " : " + errorInfo[errID];
+        errMessage = "Error Message at " + " Line " + lineNumber + " : " + errorInfo[errID];
         try {
             PL0.errWriter.write(errMessage + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //System.out.println(errMessage);
+        insert(name,errID);
+    }
+
+    void insert(String name, int errID){
+        rem.put(new Pair<String, Integer>(name,errID), 1);
+    }
+
+    private boolean redabundant(String name, int errID){
+        Object idx = rem.get(new Pair<String,Integer>(name,errID));
+        if(idx == null)return false;
+        else return errID == 11;
     }
 }

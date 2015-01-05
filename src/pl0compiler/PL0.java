@@ -6,11 +6,11 @@ import java.io.IOException;
 
 public class PL0 {
 
-    public static final String pcodeFile = "./src/test/pcode/2.txt";
-    public static final String tableFile = "./src/test/table/2.txt";
-    public static final String runtimeFile = "./src/test/runtime/2.txt";
-    public static final String errFile = "./src/test/error/2.txt";
-    public static final String inputFile="./src/test/input/2.txt";
+    public static final String pcodeFile = "./src/test/pcode/3.txt";
+    public static final String tableFile = "./src/test/table/3.txt";
+    public static final String runtimeFile = "./src/test/runtime/3.txt";
+    public static final String errFile = "./src/test/error/3.txt";
+    public static final String inputFile="./src/test/input/3.txt";
     public static BufferedWriter pcodeWriter;                   //输出虚拟机代码
     public static BufferedWriter outputWriter;                 //输出结果
     public static BufferedWriter tableWriter;                   //输出名字表

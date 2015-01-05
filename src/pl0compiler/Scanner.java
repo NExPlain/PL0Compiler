@@ -23,6 +23,7 @@ public class Scanner {
     private int ccbuf;
     public int lineNumber;
     public char ch;
+    public Symbol sym;
     public boolean isfileEneded;
     String Buffer;
     private BufferedReader cin;
@@ -39,6 +40,7 @@ public class Scanner {
         lineNumber = 0;
         cc = ccbuf = 0;
         ccbuf = 0;
+        sym = new Symbol(0);
     }
 
     public int getcc(){
@@ -57,7 +59,7 @@ public class Scanner {
                 do {
                     Buffer = cin.readLine();
                     if(Buffer == null){
-                        Error.outputErrMessage(36, lineNumber);
+                       // Error.outputErrMessage(36, lineNumber, 0);                TODO finish program incomplete
                         isfileEneded = true;
                         return ch = '\0';
                     }
@@ -122,7 +124,7 @@ public class Scanner {
         } else {
             currentSym = WorkOperator();
         }
-        return currentSym;
+        return sym = currentSym;
     }
 
     /**
