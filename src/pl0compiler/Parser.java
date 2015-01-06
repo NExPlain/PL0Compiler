@@ -295,6 +295,7 @@ public class Parser {
                         getsym();
                     } catch (PL0Exception e) {
                         e.handle(err, scan);
+                        getsym();
                     }
                 }else{
                     PL0Exception.handle(2 , err, scan);            // error 2: 常量=后应为数字
@@ -439,16 +440,16 @@ public class Parser {
         if (sym.symtype == Symbol.type.thensym.val()) {
             getsym();
         } else {
-            PL0Exception.handle(16, err, scan);                               //error 16: 应为then
+            PL0Exception.handle(16, err, scan);
         }
-        int cx1 = pcodeVM.cx;                                                        //保存当前指令地址
+        int cx1 = pcodeVM.cx;
         try {
-            pcodeVM.gen(Pcode.JPC, 0, 0);                                                 //生成条件跳转指令，跳转地址位置，暂时写0
+            pcodeVM.gen(Pcode.JPC, 0, 0);
         } catch (PL0Exception e) {
             e.handle(err, scan);
         }
-        statement(fsys, lev);                                                        //处理then后的statement
-        pcodeVM.code[cx1].a = pcodeVM.cx;                                             //经statement处理后，cx为then后语句执行
+        statement(fsys, lev);
+        pcodeVM.code[cx1].a = pcodeVM.cx;
 
         if (sym.symtype == Symbol.type.elsesym.val()) {
             pcodeVM.code[cx1].a++;
@@ -472,18 +473,18 @@ public class Parser {
         getsym();
         BitSet nxtlev = (BitSet) fsys.clone();
         nxtlev.set(Symbol.type.semicolon.val());
-        nxtlev.set(Symbol.type.untilsym.val());       // 分号或者until终结
+        nxtlev.set(Symbol.type.untilsym.val());
         statement(fsys, lev);
 
         while(statebegSyms.get(sym.symtype) || sym.symtype == Symbol.type.semicolon.val()){
             if(sym.symtype == Symbol.type.semicolon.val()){
                 getsym();
             } else {
-                PL0Exception.handle(10, err, scan);           // error 10: 语句之间漏分号
+                PL0Exception.handle(10, err, scan);
             }
             statement(nxtlev, lev);
         }
-        if(sym.symtype == Symbol.type.untilsym.val()){     // 到了until
+        if(sym.symtype == Symbol.type.untilsym.val()){
             getsym();
             condition(fsys, lev);
             try {

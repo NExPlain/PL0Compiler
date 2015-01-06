@@ -12,7 +12,7 @@ public class SymbolTable {
      */
     public int tx = 0;
 
-    private static final int MaxTableSize = 1000;
+    private static final int MaxTableSize = 500;
     public static final int levMax = 3;
     public static final int addrMax = 1000000;      // 最大允许的数值
 
@@ -110,7 +110,7 @@ public class SymbolTable {
      * @throws Exception
      */
     public void enter(Symbol sym, kind kind, int level, Parser parser) throws PL0Exception {
-        if (tx == MaxTableSize){
+        if (tx == MaxTableSize-1){
             throw new PL0Exception(39);     // 符号表溢出
         }
         for(int i = tx; i > 0 ; i --){
@@ -161,7 +161,7 @@ public class SymbolTable {
                 }else if(tab[i].kind == kind.variable){
                     msg = i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].adr;
                 }else if(tab[i].kind == kind.procedure){
-                    msg = i + " proc: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].size;
+                    msg = i + "  proc: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].size;
                 }
                 System.out.println(msg);
                 PL0.tableWriter.write(msg + '\n');

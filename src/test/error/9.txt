@@ -1,0 +1,2 @@
+Error Message at  Line 500 : 39.符号表溢出错误
+Error Message at  Line 601 : 36.程序不完整(program incomplete)

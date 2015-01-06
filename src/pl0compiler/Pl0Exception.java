@@ -13,8 +13,8 @@ public class PL0Exception extends Exception{
         if(scan.isfileEneded)return;
         err.outputErrMessage(errType, scan.lineNumber, scan.getcc());
     }
-    void handle(Error err, Scanner scan){
-        if(scan.isfileEneded)return;
+    void handle(Error err, Scanner scan) {
+        if (scan.isfileEneded) return;
         err.outputErrMessage(errType, scan.lineNumber, scan.getcc());
     }
 }

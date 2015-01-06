@@ -61,6 +61,10 @@ public class Error {
             "39.符号表溢出错误",
         };
 
+    public boolean isSystemError(int errID){
+        return errID == 39 || errID == 31 || errID == 30 || errID == 36;
+    }
+
     public void outputErrMessage(int errID, int lineNumber, int cc){
         String name = "";
         if(PL0.parser.sym != null)
@@ -99,12 +103,14 @@ public class Error {
     }
 
     void insert(String name, int errID){
+        if(isSystemError(errID))name = "";
         rem.put(new Pair<String, Integer>(name,errID), 1);
     }
 
     private boolean redabundant(String name, int errID){
+        if(isSystemError(errID))name = "";
         Object idx = rem.get(new Pair<String,Integer>(name,errID));
         if(idx == null)return false;
-        else return errID == 11;
+        else return errID == 11 || errID == 12 || errID == 15 || isSystemError(errID);
     }
 }
