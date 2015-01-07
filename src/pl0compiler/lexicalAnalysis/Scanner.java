@@ -44,6 +44,10 @@ public class Scanner {
         sym = new Symbol(0);
     }
 
+    /**
+     * 获取当前扫描位置，由扫描的字符数+\t的增益值决定
+     * @return
+     */
     public int getcc(){
         return cc + ccbuf - 1;
     }

@@ -4,6 +4,12 @@ import pl0compiler.syntaxAnalysis.Parser;
 
 import java.io.*;
 
+/**
+ * 编译器类，启动函数的基本操作
+ * 输入：input文件夹中所有文件
+ * 输出：在output文件夹中输出错误信息，在pcode文件夹中输出对应pcode
+ * Created by lizhen on 14/12/3.
+ */
 public class Compiler {
 
     public static final String pcodeFilePrefix = "./src/samples/pcode";
@@ -17,6 +23,10 @@ public class Compiler {
     public Compiler() {
     }
 
+    /**
+     * 清空以filepath为路径的文件夹
+     * @param filepath
+     */
     void clean(String filepath)
     {
         File cleanfile = new File(filepath);
@@ -29,6 +39,10 @@ public class Compiler {
         }
     }
 
+    /**
+     * 开始编译
+     * @return
+     */
     public boolean compile() {
         clean(outputFilePrefix);
         clean(pcodeFilePrefix);

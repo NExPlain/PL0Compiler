@@ -7,6 +7,7 @@ import pl0compiler.syntaxAnalysis.Parser;
 import java.io.IOException;
 
 /**
+ * 符号表类
  * Created by lizhen on 14/12/3.
  */
 public class Table {
@@ -16,11 +17,11 @@ public class Table {
      */
     public int tx = 0;
 
-    private static final int MaxTableSize = 500;
-    public static final int levMax = 3;
+    private static final int MaxTableSize = 500;    // 符号表上限
+    public static final int levMax = 3;             // 递归层数上限
     public static final int addrMax = 1000000;      // 最大允许的数值
 
-    public record[] tab;// 栈式符号表
+    public record[] tab;                            // 栈式符号表
 
     public Table(){
         tx = 0;
@@ -74,7 +75,7 @@ public class Table {
     public record at(int idx) {
         if (idx > MaxTableSize || idx < 0)
             try {
-                throw new Exception("****Access Violation in Symbol Table.");
+                throw new Exception("Symbol Table Error: RuntimeError(AccessViolation)");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -83,10 +84,11 @@ public class Table {
     }
 
     /**
-     * 对于一个符号名字，在栈式符号表中查找其最近的位置，无法找到则返回 -1
+     * 对于一个符号名字，在栈式符号表中查找其最近的位置，无法找到则返回 0
+     * 采用顺序查找的方式
      *
      * @param s 要查找的符号名
-     * @return  返回要查找的符号名的Item离栈顶最近的位置，找不到则返回 -1
+     * @return  返回要查找的符号名的Item离栈顶最近的位置，找不到则返回 0
      * @throws Exception
      */
     public int position(String s) {

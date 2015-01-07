@@ -842,7 +842,6 @@ public class Parser {
     }
 
     void outputDebugMessage(String output){
-        System.out.println("****DEBUG MESSAGE: " + output + "***");
-
+        System.out.println("****DEBUG: " + output + "***");
     }
 }

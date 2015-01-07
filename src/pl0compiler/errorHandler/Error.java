@@ -8,12 +8,16 @@ import java.io.IOException;
 import java.util.HashMap;
 
 /**
+ * 错误类，用于存储错误类别，输出错误信息
  * Created by lizhen on 14/12/3.
  */
 public class Error {
 
+    /**
+     * 用来记录错误是否冗余的HashMap
+     */
     private HashMap<javafx.util.Pair<String,Integer>, Integer> rem;
-    private static final int errMaxCnt = 100;
+    private static final int errMaxCnt = 100;                           // 错误数量上限
     public Error(){
             errCnt = 0;
             rem = new HashMap<Pair<String, Integer>, Integer>();
@@ -63,10 +67,21 @@ public class Error {
             "40.write语句中不能是过程标识符"
         };
 
+    /**
+     * 判断是否为系统错误，如果是则只报错一次
+     * @param errID
+     * @return
+     */
     public boolean isSystemError(int errID){
-        return errID == 39 || errID == 31 || errID == 30 || errID == 36;
+        return errID == 39 || errID == 31 || errID == 30 || errID == 36;    // 符号表溢出 | 嵌套层数过高 | 递归层数超过限制 | 程序不完整
     }
 
+    /**
+     * 输出错误信息
+     * @param errID
+     * @param lineNumber
+     * @param cc
+     */
     public void outputErrMessage(int errID, int lineNumber, int cc){
         String name = "";
         if(pl0compiler.Compiler.parser.sym != null)
@@ -98,11 +113,23 @@ public class Error {
         insert(name,errID);
     }
 
+    /**
+     * 向记录冗余错误的Hash表中添加错误记录
+     * @param name
+     * @param errID
+     */
     void insert(String name, int errID){
         if(isSystemError(errID))name = "";
         rem.put(new Pair<String, Integer>(name,errID), 1);
     }
 
+    /**
+     * 判断是否为冗余错误
+     * 冗余判定：重复出现的系统错误 或 同一个标识符的 标识符未说明 ｜ 不可向常量或过程名赋值 ｜ 不可调用常量或变量 错误多次出现
+     * @param name
+     * @param errID
+     * @return
+     */
     private boolean redabundant(String name, int errID){
         if(isSystemError(errID))name = "";
         Object idx = rem.get(new Pair<String,Integer>(name,errID));

@@ -4,6 +4,7 @@ import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
 
 /**
+ * 生成Pcode的虚拟机
  * Created by lizhen on 14/12/13.
  */
 public class PcodeVM {
