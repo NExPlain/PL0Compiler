@@ -1,2 +1,0 @@
-1  const: a  val: 1
-2  const: b  val: 0

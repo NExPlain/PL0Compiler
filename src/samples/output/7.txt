@@ -1,0 +1,15 @@
+    const c1 = 1, c2 = 2;
+    var v1,v2;
+    procedure gao;
+        var i1, i2;
+        begin
+            i1 := 5;
+            i2 := 6;
+            v1 := i1 + i2 + c1;
+            v2 = i2 * i2 * c2
+****           ^13.应为赋值运算符:=
+        end;
+    begin
+        call gao;
+        write(v1,v2)
+    end.

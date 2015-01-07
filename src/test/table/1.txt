@@ -1,9 +1,0 @@
-1  const: a  val: 45
-2  const: b  val: 27
-3  var: x  lev: 0  adr: 3
-4  var: y  lev: 0  adr: 4
-5  var: g  lev: 0  adr: 5
-6  var: m  lev: 0  adr: 6
-7  proc: swap  lev: 0  adr: 0
-8  var: temp  lev: 1  adr: 3
-8  proc: mod  lev: 0  adr: 0

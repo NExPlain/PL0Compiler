@@ -1,2 +1,0 @@
-Error Message at  Line 3 : 12.不可向常量或过程名赋值
-Error Message at  Line 4 : 11.标识符未说明
