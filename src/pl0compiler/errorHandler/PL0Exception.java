@@ -20,7 +20,7 @@ public class PL0Exception extends Exception{
      */
     public static void handle(int errType, pl0compiler.errorHandler.Error err, Scanner scan){
         if(scan.isfileEneded)return;
-        err.outputErrMessage(errType, scan.lineNumber, scan.getcc());
+        err.outputErrMessage(errType, scan.lineNumber, scan.getcc(), scan.getccbuf());
     }
 
     /**
@@ -30,6 +30,6 @@ public class PL0Exception extends Exception{
      */
     public void handle(Error err, Scanner scan) {
         if (scan.isfileEneded) return;
-        err.outputErrMessage(errType, scan.lineNumber, scan.getcc());
+        err.outputErrMessage(errType, scan.lineNumber, scan.getcc(), scan.getccbuf());
     }
 }

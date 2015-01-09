@@ -3,6 +3,7 @@ package pl0compiler.errorHandler;
 import javafx.util.Pair;
 import pl0compiler.*;
 import pl0compiler.Compiler;
+import pl0compiler.syntaxAnalysis.Parser;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -13,10 +14,7 @@ import java.util.HashMap;
  */
 public class Error {
 
-    /**
-     * 用来记录错误是否冗余的HashMap
-     */
-    private HashMap<javafx.util.Pair<String,Integer>, Integer> rem;
+    private HashMap<javafx.util.Pair<String,Integer>, Integer> rem;     // 用来记录错误是否冗余的HashMap
     private static final int errMaxCnt = 100;                           // 错误数量上限
     public Error(){
             errCnt = 0;
@@ -64,7 +62,8 @@ public class Error {
             "37.无法识别的字符",
             "38.程序过长(program too long)",
             "39.符号表溢出错误",
-            "40.write语句中不能是过程标识符"
+            "40.write语句中不能是过程标识符",
+            "41.无法解析的程序部分"
         };
 
     /**
@@ -73,16 +72,16 @@ public class Error {
      * @return
      */
     public boolean isSystemError(int errID){
-        return errID == 39 || errID == 31 || errID == 30 || errID == 36;    // 符号表溢出 | 嵌套层数过高 | 递归层数超过限制 | 程序不完整
+        return errID == 39 || errID == 31 || errID == 30 || errID == 36 || errID == 41;    // 符号表溢出 | 嵌套层数过高 | 递归层数超过限制 | 程序不完整 | 多余的程序
     }
 
     /**
-     * 输出错误信息
+     * 输出错误信息，根据错误id和具体位置在output文件上打印
      * @param errID
      * @param lineNumber
      * @param cc
      */
-    public void outputErrMessage(int errID, int lineNumber, int cc){
+    public void outputErrMessage(int errID, int lineNumber, int cc, int ccbuf){
         String name = "";
         if(pl0compiler.Compiler.parser.sym != null)
             name = Compiler.parser.sym.name;
@@ -99,7 +98,10 @@ public class Error {
             return;
         }
         String errMessage = "****";
-        for(int i = 0 ; i < cc-1 ; i ++){
+        for(int i = 0 ;i < ccbuf ; i ++){
+            errMessage += '\t';
+        }
+        for(int i = 0 ; i < cc-2 ; i ++){
             errMessage += ' ';
         }
         errMessage += "^" + errorInfo[errID];

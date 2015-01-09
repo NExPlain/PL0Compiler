@@ -1,0 +1,5 @@
+var a;
+begin
+    a := 5
+end.
+asdsaad

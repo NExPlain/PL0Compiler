@@ -1,10 +1,7 @@
 package pl0compiler.utils;
 
-import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
 import pl0compiler.syntaxAnalysis.Parser;
-
-import java.io.IOException;
 
 /**
  * 符号表类
@@ -21,7 +18,7 @@ public class Table {
     public static final int levMax = 3;             // 递归层数上限
     public static final int addrMax = 1000000;      // 最大允许的数值
 
-    public record[] tab;                            // 栈式符号表
+    public record[] tab;                                // 栈式符号表
 
     public Table(){
         tx = 0;

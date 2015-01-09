@@ -18,9 +18,9 @@ import java.util.BitSet;
 public class Parser {
     public Symbol sym;          //当前读到的符号
     public Scanner scan;        //词法分析器
-    public Table table;   //符号表
+    public Table table;         //符号表
     public PcodeVM pcodeVM;     //pcode虚拟机
-    public pl0compiler.errorHandler.Error err;           //错误处理机
+    public pl0compiler.errorHandler.Error err;           //对应错误处理机
 
     /**
      * 声明、语句和因子的FIRST集合
@@ -80,9 +80,18 @@ public class Parser {
         }
     }
 
+    public void getsym2(){
+        try {
+            sym = scan.getsym();
+        } catch (PL0Exception e) {
+            sym = new Symbol(Symbol.type.nul.val());
+            err.outputErrMessage(e.errType, scan.lineNumber, scan.getcc(), scan.getccbuf());
+        }
+    }
+
     /**
      * 在自程序出口处，检测下一个取来的符号是否为该语法成分的合法后继符号
-     * 若不是则不断跳过，直到后继符号 | 停止符号集合为止
+     * 若不是则不断跳过，直到后继符号 | 补救符号集合为止
      * @param s1 合法符号集合
      * @param s2 停止符号集合
      * @param n 错误编码
@@ -112,6 +121,19 @@ public class Parser {
             PL0Exception.handle(9, err, scan);
         }
 
+        if(sym.symtype == Symbol.type.nul.val())
+            getsym2();
+        else                                        // 如果文件还没有读完，则以错误36进行判断
+            getsym();
+
+        while(!scan.isfileEneded){
+            try{
+                throw new PL0Exception(41);
+            }catch (PL0Exception e){
+                e.handle(err,scan);
+            }
+            scan.readToEOF();                   // 读取到EOF
+        }
         pcodeVM.listcode(0);
     }
 
@@ -303,25 +325,6 @@ public class Parser {
     }
 
     /**
-     * 识别<标识符>
-     * <变量说明部分>::= var <标识符>{ , <标识符> } ;
-     *
-     * @param lev
-     */
-    void vardeclaration(int lev){
-        if(sym.symtype == Symbol.type.ident.val()){
-            try {
-                table.enter(sym, Table.type.variable, lev, this);
-            } catch (PL0Exception e) {
-                e.handle(err, scan);
-            }
-            getsym();
-        }else{
-            PL0Exception.handle(4, err, scan);            // error 4: const, var, procedure 后应为标识符
-        }
-    }
-
-    /**
      * <语句>::= <赋值语句>|<条件语句>|<当型循环语句>|<过程调用语句>|<读语句>|<写语句>|<复合语句>|<重复语句>|<空>
      *
      * FIRST(statement) = {ident, read, write, call, if, while}
@@ -350,6 +353,25 @@ public class Parser {
         test(fsys, nxlev, 19);                              // error 19 : 语句后的符号不正确
     }
 
+    /**
+     * 识别<标识符>
+     * <变量说明部分>::= var <标识符>{ , <标识符> } ;
+     *
+     * @param lev
+     */
+    void vardeclaration(int lev){
+        if(sym.symtype == Symbol.type.ident.val()){
+            try {
+                table.enter(sym, Table.type.variable, lev, this);
+            } catch (PL0Exception e) {
+                e.handle(err, scan);
+            }
+            getsym();
+        }else{
+            PL0Exception.handle(4, err, scan);            // error 4: const, var, procedure 后应为标识符
+        }
+    }
+
 
     /**
      * 分析:=<表达式>
@@ -371,7 +393,6 @@ public class Parser {
             getsym();
         }else{
             PL0Exception.handle(13, err, scan);
-            getsym();
         }
         expression(fsys, lev);
         if(i != 0){
@@ -494,9 +515,6 @@ public class Parser {
     /**
      * 分析<while循环语句>
      * <while循环语句> ::= while<条件>do<语句>
-     * 首先用cx1变量记下当前代码段分配位置， 作为循环的开始位置。 然后处理while语句中的条件表达式生成相应代码把结果放在数据栈顶，
-     * 再用cx2变量记下当前位置， 生成条件转移指令， 转移位置未知，填0。 通过递归调用语句分析过程分析do语句后的语句或语句块并生成相应代码。
-     * 最后生成一条无条件跳转指令jmp，跳转到cx1所指位置， 并把cx2所指的条件跳转指令JPC的跳转位置,改成当前代码段分配位置
      *
      * @param fsys FOLLOW符号集
      * @param lev 当前层次
@@ -605,7 +623,8 @@ public class Parser {
     }
 
     /**
-     * <写语句> ::= write '(' <标识符> { , <标识符> } ')'
+     * <写语句> ::= write '(' <表达式> { , <表达式> } ')'
+     * 这里写语句以表达式处理 -> 标识符无法通过部分数据
      *
      * @param fsys FOLLOW集合
      * @param lev 当前层次
@@ -842,6 +861,6 @@ public class Parser {
     }
 
     void outputDebugMessage(String output){
-        System.out.println("****DEBUG: " + output + "***");
+        System.out.println("**** " + output + "***");
     }
 }

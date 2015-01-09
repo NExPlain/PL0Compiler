@@ -3,11 +3,14 @@ package pl0compiler.lexicalAnalysis;
 import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
 import pl0compiler.utils.Symbol;
+import sun.security.action.GetBooleanAction;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.CharBuffer;
+import java.util.logging.Handler;
 
 /**
  * Created by lizhen on 14/12/3.
@@ -49,25 +52,46 @@ public class Scanner {
      * @return
      */
     public int getcc(){
-        return cc + ccbuf - 1;
+        return cc - ccbuf;
     }
+    /**
+     * 获取当前\t的数量
+     */
+    public int getccbuf(){return ccbuf;}
 
+    public void readToEOF(){
+        while(Buffer != null){
+            try {
+                Buffer = cin.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            lineNumber++;
+            if(Buffer == null)break;
+            try {
+                Compiler.outputWriter.write("    " + Buffer + "\n");
+                Compiler.outputWriter.flush();                       // 把读入的源程序同时输出到output文件上
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        isfileEneded = true;
+    }
     /**
      * 读取一个字符，'\0'表示已读到文件末尾
      * @return 返回当前获取到的字符
      */
-    public char getch() {
+    public char getch() throws PL0Exception {
         if(isfileEneded == true){
-            return ch = '\0';
+            throw new PL0Exception(36);
         }
         if (cc == Buffer.length()) {
             try {
                 do {
                     Buffer = cin.readLine();
                     if(Buffer == null){
-                        pl0compiler.Compiler.parser.err.outputErrMessage(36, lineNumber, cc);
                         isfileEneded = true;
-                        return ch = '\0';
+                        throw new PL0Exception(36);
                     }
                     lineNumber++;
                     Compiler.outputWriter.write("    " + Buffer + "\n");
@@ -116,9 +140,13 @@ public class Scanner {
         Symbol currentSym = new Symbol(Symbol.type.nul.val());
         while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\u0010') {
             if(ch == '\t'){
-                ccbuf += 3;
+                ccbuf ++;
             }
-            getch();
+            try {
+                getch();
+            }catch (PL0Exception e){
+                throw new PL0Exception(36);
+            }
         }
         if(ch == '\0'){
             return currentSym;
@@ -192,7 +220,11 @@ public class Scanner {
         do {
             if(str.length() < al)
                 str.append(ch);
-            getch();
+            try {
+                getch();
+            }catch(PL0Exception e){
+                e.handle(Compiler.parser.err,this);
+            }
         } while (isDigit(ch) || isAlpha(ch));
         String token = str.toString();
 

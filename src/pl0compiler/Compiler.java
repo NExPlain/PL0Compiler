@@ -57,14 +57,26 @@ public class Compiler {
                 parser.scan.getch();
                 parser.getsym();
                 parser.start();
+
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("compile error");
             }
             System.out.println("compile completed");
+            try {
+                outputWriter.write("****************************\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             if (parser.err.errCnt == 0) {
                 try {
                     outputWriter.write("Accepted\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }else{
+                try {
+                    outputWriter.write("COMPILE ERROR: " + parser.err.errCnt + " ERROR" + (parser.err.errCnt == 1 ? "" : "s") + '\n');
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -76,6 +88,7 @@ public class Compiler {
                 e.printStackTrace();
             }
         }
-        return (parser.err.errCnt == 0);
+        if(parser == null)return false;                                                     // 编译遇到问题
+        return (parser.err.errCnt == 0);                                                    // 根据编译错误数量判断编译是否有问题
     }
 }

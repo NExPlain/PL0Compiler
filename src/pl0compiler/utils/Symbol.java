@@ -1,6 +1,4 @@
 package pl0compiler.utils;
-
-import java.util.BitSet;
 import java.util.HashMap;
 
 /**
