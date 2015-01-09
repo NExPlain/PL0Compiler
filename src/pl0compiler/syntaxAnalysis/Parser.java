@@ -3,7 +3,7 @@ package pl0compiler.syntaxAnalysis;
 import pl0compiler.errorHandler.PL0Exception;
 import pl0compiler.utils.Table;
 import pl0compiler.lexicalAnalysis.Scanner;
-import pl0compiler.pcode.Pcode;
+import pl0compiler.utils.Pcode;
 import pl0compiler.pcode.PcodeVM;
 import pl0compiler.utils.Symbol;
 

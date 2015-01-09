@@ -15,7 +15,7 @@ public class Compiler {
     public static final String pcodeFilePrefix = "./samples/pcode";
     public static final String outputFilePrefix = "./samples/output";
     public static final String inputFilePrefix ="./samples/input";
-    public static final String generalPrefix ="./samples/input";
+    public static final String generalPrefix ="./samples";
     public static BufferedWriter pcodeWriter;                   //输出虚拟机代码
     public static BufferedWriter outputWriter;                 //输出结果
 

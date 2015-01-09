@@ -2,6 +2,7 @@ package pl0compiler.pcode;
 
 import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
+import pl0compiler.utils.Pcode;
 
 /**
  * 生成Pcode的虚拟机
