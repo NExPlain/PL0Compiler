@@ -106,7 +106,6 @@ public class Error {
         }
         errMessage += "^" + errorInfo[errID];
         try {
-            System.out.println(errMessage);
             Compiler.outputWriter.write(errMessage + "\n");
         } catch (IOException e) {
             e.printStackTrace();

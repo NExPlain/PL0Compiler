@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="PL0Compiler">
+    <output-path>$PROJECT_DIR$/out/artifacts/PL0Compiler</output-path>
+    <root id="root">
+      <element id="archive" name="PL0Compiler.jar">
+        <element id="module-output" name="PL0Compiler" />
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>

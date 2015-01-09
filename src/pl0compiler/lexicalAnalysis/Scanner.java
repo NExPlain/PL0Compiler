@@ -102,7 +102,6 @@ public class Scanner {
                 System.out.println("reading files error");
             }
             Buffer += " ";                                         // 加一个空格表示到达行末尾，与下一行的开头分开
-            System.out.println("    "+Buffer);
             cc = ccbuf = 0;
         }
         if(cc < Buffer.length())ch = Buffer.charAt(cc++);

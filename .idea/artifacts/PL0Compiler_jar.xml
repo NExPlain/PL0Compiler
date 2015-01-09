@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PL0Compiler:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/PL0Compiler_jar</output-path>
+    <root id="archive" name="PL0Compiler.jar">
+      <element id="module-output" name="PL0Compiler" />
+    </root>
+  </artifact>
+</component>
