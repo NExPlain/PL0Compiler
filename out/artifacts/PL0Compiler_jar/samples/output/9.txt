@@ -1,8 +1,0 @@
-    var a;
-    begin
-        a := 5
-    end.
-    asdsaad
-****      ^41.无法解析的程序部分
-****************************
-COMPILE ERROR: 1 ERROR

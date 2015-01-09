@@ -1,7 +1,0 @@
-const a = 1, b = 0;
-begin
-    a := b;
-    a := c;
-    a := c;
-    a := c;
-end.
