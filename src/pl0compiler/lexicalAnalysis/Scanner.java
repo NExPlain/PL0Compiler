@@ -3,14 +3,11 @@ package pl0compiler.lexicalAnalysis;
 import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
 import pl0compiler.utils.Symbol;
-import sun.security.action.GetBooleanAction;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.CharBuffer;
-import java.util.logging.Handler;
 
 /**
  * Created by lizhen on 14/12/3.

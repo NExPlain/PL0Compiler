@@ -46,9 +46,12 @@ public class Compiler {
      * @return
      */
     public boolean compile() {
+        File file = new File(generalPrefix);
+        file.mkdir();
+        file = new File(inputFilePrefix);
+        file.mkdir();
         clean(outputFilePrefix);
         clean(pcodeFilePrefix);
-        File file = new File(inputFilePrefix);
         String[] filelist = file.list();
         for(int i = 0 ;i < filelist.length ; i ++) {
             if(!filelist[i].endsWith(".txt")){

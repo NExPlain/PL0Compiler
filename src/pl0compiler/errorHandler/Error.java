@@ -1,9 +1,7 @@
 package pl0compiler.errorHandler;
 
-import javafx.util.Pair;
-import pl0compiler.*;
+
 import pl0compiler.Compiler;
-import pl0compiler.syntaxAnalysis.Parser;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,13 +10,15 @@ import java.util.HashMap;
  * 错误类，用于存储错误类别，输出错误信息
  * Created by lizhen on 14/12/3.
  */
+
+
 public class Error {
 
-    private HashMap<javafx.util.Pair<String,Integer>, Integer> rem;     // 用来记录错误是否冗余的HashMap
+    private HashMap<String, Integer> rem;                               // 用来记录错误是否冗余的HashMap
     private static final int errMaxCnt = 100;                           // 错误数量上限
     public Error(){
             errCnt = 0;
-            rem = new HashMap<Pair<String, Integer>, Integer>();
+            rem = new HashMap<String, Integer>();
     }
     public static int errCnt = 0;
     public static final String[] errorInfo = new String[]{
@@ -121,7 +121,7 @@ public class Error {
      */
     void insert(String name, int errID){
         if(isSystemError(errID))name = "";
-        rem.put(new Pair<String, Integer>(name,errID), 1);
+        rem.put(name + "#" + String.valueOf(errID), 1);
     }
 
     /**
@@ -133,7 +133,7 @@ public class Error {
      */
     private boolean redabundant(String name, int errID){
         if(isSystemError(errID))name = "";
-        Object idx = rem.get(new Pair<String,Integer>(name,errID));
+        Object idx = rem.get(name + "#" + String.valueOf(errID));
         if(idx == null)return false;
         else return errID == 11 || errID == 12 || errID == 15 || isSystemError(errID);
     }
