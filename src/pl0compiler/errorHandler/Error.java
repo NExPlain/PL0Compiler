@@ -86,10 +86,12 @@ public class Error {
         if(pl0compiler.Compiler.parser.sym != null)
             name = Compiler.parser.sym.name;
         if(redabundant(name,errID))return;
-        if(errCnt > errMaxCnt){
+        if(errCnt >= errMaxCnt){
             String errMessage = "****";
             errMessage += "编译错误达到上限！";
+            if(errCnt > errMaxCnt)
             System.out.println(errMessage);
+            errCnt ++ ;
             try {
                 Compiler.outputWriter.write(errMessage + "\n");
             } catch (IOException e) {
@@ -135,6 +137,6 @@ public class Error {
         if(isSystemError(errID))name = "";
         Object idx = rem.get(name + "#" + String.valueOf(errID));
         if(idx == null)return false;
-        else return errID == 11 || errID == 12 || errID == 15 || isSystemError(errID);
+        else return errID == 11 || errID == 12 || errID == 15 || errID == 38 ||  isSystemError(errID);
     }
 }

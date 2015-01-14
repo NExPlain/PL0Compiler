@@ -156,8 +156,7 @@ public class Parser {
 
         dx = 3;                     // 存放静态链SL、动态链DL和返回地址RA
 
-        table.at(table.tx);
-        table.tab[table.tx].reDirectAddr(pcodeVM.cx);
+        table.at(table.tx).reDirectAddr(pcodeVM.cx);
 
         try {
             pcodeVM.gen(Pcode.JMP, 0, 0);
@@ -257,7 +256,7 @@ public class Parser {
         pcodeVM.code[record.adr].a = pcodeVM.cx;                         //过程入口地址填写在code中的jmp 的a参数里
         record.adr = pcodeVM.cx;                                        //当前过程代码地址
         record.size = dx;                                               //dx: 一个procedure中的变量数目+3 ，声明部分中每增加一条声明都会给dx+1
-        table.tab[tx0] = record;
+        //table.tab[tx0] = record;
 
         cx0 = pcodeVM.cx;                                                                 // 记录地址值，用于重定向这个jmp的a
 
@@ -284,7 +283,10 @@ public class Parser {
         //pcodeVM.listcode(cx0);
 
         dx = dx0;                                                                           //恢复堆栈帧计数器
-        table.tx = tx0;                                                                     //回复名字表位置
+        while(table.tx > tx0){                                                              //回复名字表位置
+            table.pop();
+        }
+        table.tx = tx0;
     }
 
     /**

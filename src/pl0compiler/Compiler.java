@@ -3,6 +3,8 @@ package pl0compiler;
 import pl0compiler.syntaxAnalysis.Parser;
 
 import java.io.*;
+import java.sql.Time;
+import java.util.Calendar;
 
 /**
  * 编译器类，启动函数的基本操作
@@ -59,6 +61,7 @@ public class Compiler {
                 continue;
             }
             System.out.print("Compiling " + filelist[i] + "...");
+            Calendar startTime = Calendar.getInstance();
             try {
                 String add = "/" + filelist[i];
                 parser = new Parser(inputFilePrefix + add);
@@ -97,6 +100,13 @@ public class Compiler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            Calendar endTime = Calendar.getInstance();
+            int deltaMinute = endTime.get(Calendar.MINUTE) - startTime.get(Calendar.MINUTE);
+            int deltaSecond = endTime.get(Calendar.SECOND) - startTime.get(Calendar.SECOND);
+            int deltaMilliSecond = endTime.get(Calendar.MILLISECOND) - startTime.get(Calendar.MILLISECOND);
+            deltaSecond = deltaSecond + 60 * deltaMinute;
+            deltaMilliSecond = deltaMilliSecond + 1000 * deltaSecond;
+            System.out.println(String.format("Cost %d milliseconds",deltaMilliSecond));
         }
         if(parser == null)return false;                                                     // 编译遇到问题
         return (parser.err.errCnt == 0);                                                    // 根据编译错误数量判断编译是否有问题

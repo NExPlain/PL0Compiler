@@ -10,7 +10,7 @@ import pl0compiler.utils.Pcode;
  */
 public class PcodeVM {
     //pcode数组上限
-    private static final int cxmax = 500;
+    private static final int cxmax = 1000000;               // TODO change it
     //虚拟机代码指针，存放数据范围[0,cx-1]
     public int cx = 0;
     //存放虚拟机代码的数组

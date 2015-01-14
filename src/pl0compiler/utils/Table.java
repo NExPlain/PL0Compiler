@@ -14,7 +14,7 @@ public class Table {
      */
     public int tx = 0;
 
-    private static final int MaxTableSize = 500;    // 符号表上限
+    private static final int MaxTableSize = 1000000;    // 符号表上限                // TODO change it
     public static final int levMax = 3;             // 递归层数上限
     public static final int addrMax = 1000000;      // 最大允许的数值
 
@@ -24,6 +24,7 @@ public class Table {
         tx = 0;
         tab = new record[MaxTableSize];
     }
+
     public static enum type {
         constant(0),
         variable(1),
@@ -63,6 +64,16 @@ public class Table {
         }
     }
 
+    public void pop(){
+        if(tx <= 0){
+            try{
+                throw new Exception();
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
+        }
+        tx--;
+    }
     /**
      * 访问在栈中位置为idx的Item
      *
@@ -143,7 +154,6 @@ public class Table {
             }
         }
         tab[++tx] = record;
-        //printTable(tx);
     }
 
 
