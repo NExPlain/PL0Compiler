@@ -1,7 +1,12 @@
 package pl0compiler.syntaxAnalysis;
 
+import pl0compiler.*;
+import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
-import pl0compiler.utils.Table;
+import pl0compiler.symbolTables.BinaryTable;
+import pl0compiler.symbolTables.HashTable;
+import pl0compiler.symbolTables.StackTable;
+import pl0compiler.symbolTables.Table;
 import pl0compiler.lexicalAnalysis.Scanner;
 import pl0compiler.utils.Pcode;
 import pl0compiler.pcode.PcodeVM;
@@ -34,7 +39,12 @@ public class Parser {
 
     public Parser(String inputfilePath){
         this.scan = new Scanner(inputfilePath);
-        this.table = new Table();
+        this.table = new StackTable();
+        if(Compiler.MODEID == Compiler.HASHTABLEMODE){
+            this.table = new HashTable();
+        }else if(Compiler.MODEID == Compiler.BINARYTABLEMODE){
+            this.table = new BinaryTable();
+        }
         this.pcodeVM = new PcodeVM();
         this.err = new pl0compiler.errorHandler.Error();
 
@@ -156,7 +166,9 @@ public class Parser {
 
         dx = 3;                     // 存放静态链SL、动态链DL和返回地址RA
 
-        table.at(table.tx).reDirectAddr(pcodeVM.cx);
+        Table.Record record = table.at(table.tx);
+        record.reDirectAddr(pcodeVM.cx);
+        table.modify(record, table.tx);
 
         try {
             pcodeVM.gen(Pcode.JMP, 0, 0);
@@ -249,14 +261,14 @@ public class Parser {
             //FIRST(declaration)={const var procedure null };
         } while (declbegSyms.get(sym.symtype));                                             //直到没有声明符号结束
 
-        Table.record record = table.at(tx0);
+        record = table.at(tx0);
         if(pcodeVM.code[record.adr] == null){
             pcodeVM.code[record.adr] = new Pcode(0,0,0);
         }
         pcodeVM.code[record.adr].a = pcodeVM.cx;                         //过程入口地址填写在code中的jmp 的a参数里
         record.adr = pcodeVM.cx;                                        //当前过程代码地址
         record.size = dx;                                               //dx: 一个procedure中的变量数目+3 ，声明部分中每增加一条声明都会给dx+1
-        //table.tab[tx0] = record;
+        table.modify(record, tx0);
 
         cx0 = pcodeVM.cx;                                                                 // 记录地址值，用于重定向这个jmp的a
 
@@ -286,7 +298,6 @@ public class Parser {
         while(table.tx > tx0){                                                              //回复名字表位置
             table.pop();
         }
-        table.tx = tx0;
     }
 
     /**
@@ -399,7 +410,7 @@ public class Parser {
         expression(fsys, lev);
         if(i != 0){
             try {
-                Table.record record = table.at(i);
+                Table.Record record = table.at(i);
                 pcodeVM.gen(Pcode.STO, lev - record.level, record.adr);
             } catch (PL0Exception e) {
                 e.handle(err, scan);
@@ -419,7 +430,7 @@ public class Parser {
         if (sym.symtype == Symbol.type.ident.val()) {
             int index = table.position(sym.name);
             if (index != 0) {
-                Table.record item = table.at(index);
+                Table.Record item = table.at(index);
                 if (item.type == Table.type.procedure)                 //检查该标识符的类型是否为procedure
                 {
                     try {
@@ -598,7 +609,7 @@ public class Parser {
                     if (index == 0) {
                         PL0Exception.handle(11, err, scan);                              //error 11: 标识符未声明
                     } else {
-                        Table.record record = table.at(index);
+                        Table.Record record = table.at(index);
                         if (record.type != Table.type.variable) {
                             PL0Exception.handle(33, err, scan);                          //read()中的标识符不是变量
                         } else {
@@ -708,7 +719,7 @@ public class Parser {
             if (sym.symtype == Symbol.type.ident.val()) {
                 int index = table.position(sym.name);
                 if (index > 0) {
-                    Table.record record = table.at(index);
+                    Table.Record record = table.at(index);
                     if(record.type == Table.type.constant){
                         try {
                             pcodeVM.gen(Pcode.LIT, 0, record.value);                     //生成lit指令，把这个数值字面常量放到栈顶

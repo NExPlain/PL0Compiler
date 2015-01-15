@@ -1,28 +1,31 @@
-package pl0compiler.utils;
+package pl0compiler.symbolTables;
 
 import pl0compiler.errorHandler.PL0Exception;
 import pl0compiler.syntaxAnalysis.Parser;
+import pl0compiler.utils.Symbol;
+
+import javax.swing.*;
 
 /**
  * 符号表类
  * Created by lizhen on 14/12/3.
  */
-public class Table {
+public abstract class Table {
 
     /**
      * 当前符号表指针
      */
     public int tx = 0;
 
-    private static final int MaxTableSize = 1000000;    // 符号表上限                // TODO change it
+    public static final int MaxTableSize = 1000000;    // 符号表上限                // TODO change it
     public static final int levMax = 3;             // 递归层数上限
     public static final int addrMax = 1000000;      // 最大允许的数值
 
-    public record[] tab;                                // 栈式符号表
+    public Record[] tab;                                // 栈式符号表
 
     public Table(){
         tx = 0;
-        tab = new record[MaxTableSize];
+        tab = new Record[MaxTableSize];
     }
 
     public static enum type {
@@ -41,7 +44,7 @@ public class Table {
         }
     }
 
-    public class record {
+    public class Record {
         public String name;            // 名字
         public Table.type type;                // 种类(constant, variable, procedure)
         public int value;                // 值，当kind为常量时
@@ -49,68 +52,19 @@ public class Table {
         public int adr;                 // 地址，当kind为常量或过程时
         public int size;               // 该item的大小
 
-        public record(String name, Table.type kind, int value, int level, int adr) {
+        public Record(String name, Table.type kind, int value, int level, int adr) {
             this.name = name;
             this.type = kind;
             this.value = value;
             this.level = level;
             this.adr = adr;
         }
-        public record(){
+        public Record(){
             name = "";
         }
         public void reDirectAddr(int addr) {
             this.adr = addr;
         }
-    }
-
-    public void pop(){
-        if(tx <= 0){
-            try{
-                throw new Exception();
-            }catch (Exception ex){
-                ex.printStackTrace();
-            }
-        }
-        tx--;
-    }
-    /**
-     * 访问在栈中位置为idx的Item
-     *
-     * @param idx 要访问的符号表对象的对应标号
-     * @return 返回位置为idx的Item
-     */
-    public record at(int idx) {
-        if (idx > MaxTableSize || idx < 0)
-            try {
-                throw new Exception("Symbol Table Error: RuntimeError(AccessViolation)");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        if(tab[idx] == null)tab[idx] = new record();
-        return tab[idx];
-    }
-
-    /**
-     * 对于一个符号名字，在栈式符号表中查找其最近的位置，无法找到则返回 0
-     * 采用顺序查找的方式
-     *
-     * @param s 要查找的符号名
-     * @return  返回要查找的符号名的Item离栈顶最近的位置，找不到则返回 0
-     * @throws Exception
-     */
-    public int position(String s) {
-        try {
-            tab[0].name = s;
-            for (int i = tx; i >= 0; i--) {
-                if (at(i).name.equals(s)) {
-                    return i;
-                }
-            }
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-        return 0;
     }
 
     /**
@@ -133,7 +87,7 @@ public class Table {
                 throw new PL0Exception(29);
             }
         }
-        record record = new record();
+        Record record = new Record();
         record.name = sym.name;
         record.type = kind;
         if(kind.val() == type.constant.val()){                                          // 常量
@@ -153,31 +107,49 @@ public class Table {
                 e.printStackTrace();
             }
         }
-        tab[++tx] = record;
+        enterTable(record);
     }
 
+    /**
+     * 访问在栈中位置为idx的Item
+     *
+     * @param idx 要访问的符号表对象的对应标号
+     * @return 返回位置为idx的Item
+     */
+    public Record at(int idx) {
+        if (idx > MaxTableSize || idx < 0)
+            try {
+                throw new Exception("Symbol Table Error: RuntimeError(AccessViolation)");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        if(tab[idx] == null)tab[idx] = new Record();
+        return tab[idx];
+    }
+    /**
+     * 对于一个符号名字，在栈式符号表中查找其最近的位置，无法找到则返回 0
+     * 采用顺序查找的方式
+     *
+     * @param s 要查找的符号名
+     * @return  返回要查找的符号名的Item离栈顶最近的位置，找不到则返回 0
+     * @throws Exception
+     */
+    public abstract int position(String s);
+
+    public abstract void enterTable(Record record);
+
+    public abstract void pop();
+
+    public void modify(Record record, int idx) {
+
+        tab[idx] = record;
+    }
 
     /**
      * 输出符号表内容
      *
      * @param start 当前符号表区间的左端
      */
-    void printTable(int start) {
-        if (start > tx) {
-            System.out.println("  NULL");
-        }
-        for (int i = start; i <= tx; i++) {
-                String msg = "table error !";
-                if(tab[i].type == type.constant){
-                    msg = i + "  const: " + tab[i].name + "  val: " + tab[i].value;
-                }else if(tab[i].type == type.variable){
-                    msg = i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].adr;
-                }else if(tab[i].type == type.procedure){
-                    msg = i + "  proc: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].size;
-                }
-                System.out.println(msg);
-
-        }
-    }
+    public abstract void printTable(int start) ;
 
 }

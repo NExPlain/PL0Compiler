@@ -89,14 +89,16 @@ public class Error {
         if(errCnt >= errMaxCnt){
             String errMessage = "****";
             errMessage += "编译错误达到上限！";
-            if(errCnt > errMaxCnt)
-            System.out.println(errMessage);
+            if(errCnt == errMaxCnt){
+                System.out.println(errMessage);
+
+             try {
+                 Compiler.outputWriter.write(errMessage + "\n");
+             } catch (IOException e) {
+                 e.printStackTrace();
+             }
+          }
             errCnt ++ ;
-            try {
-                Compiler.outputWriter.write(errMessage + "\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             return;
         }
         String errMessage = "****";

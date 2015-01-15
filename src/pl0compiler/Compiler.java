@@ -14,6 +14,11 @@ import java.util.Calendar;
  */
 public class Compiler {
 
+    public static int MODEID;
+    public static final int STACKTABLEMODE = 1;   // 使用栈式符号表
+    public static final int BINARYTABLEMODE = 2;  // 使用有序符号表二分
+    public static final int HASHTABLEMODE = 3;    // 使用Hash符号表
+    public static String MODENAME[] = {"","StackTable Mode","BinaryTable Mode","HashTable Mode"};
     public static final String pcodeFilePrefix = "./samples/pcode";
     public static final String outputFilePrefix = "./samples/output";
     public static final String inputFilePrefix ="./samples/input";
@@ -48,6 +53,7 @@ public class Compiler {
      * @return
      */
     public boolean compile() {
+        System.out.println("Start compiling in " + MODENAME[MODEID]);
         File file = new File(generalPrefix);
         file.mkdir();
         file = new File(inputFilePrefix);
