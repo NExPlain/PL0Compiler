@@ -4,10 +4,9 @@ import pl0compiler.errorHandler.PL0Exception;
 import pl0compiler.syntaxAnalysis.Parser;
 import pl0compiler.utils.Symbol;
 
-import javax.swing.*;
 
 /**
- * 符号表类
+ * 符号表类，这个类是符号表类的基类，3种符号表实现都集成自这个类
  * Created by lizhen on 14/12/3.
  */
 public abstract class Table {
@@ -17,7 +16,7 @@ public abstract class Table {
      */
     public int tx = 0;
 
-    public static final int MaxTableSize = 1000000;    // 符号表上限                // TODO change it
+    public static final int MaxTableSize = 1000000;    // 为了编译大数据设置的较大
     public static final int levMax = 3;             // 递归层数上限
     public static final int addrMax = 1000000;      // 最大允许的数值
 
@@ -45,12 +44,12 @@ public abstract class Table {
     }
 
     public class Record {
-        public String name;            // 名字
+        public String name;                    // 名字
         public Table.type type;                // 种类(constant, variable, procedure)
-        public int value;                // 值，当kind为常量时
-        public int level;                // 嵌套层次
-        public int adr;                 // 地址，当kind为常量或过程时
-        public int size;               // 该item的大小
+        public int value;                      // 值，当kind为常量时
+        public int level;                      // 嵌套层次
+        public int adr;                        // 地址，当kind为常量或过程时
+        public int size;                       // 该item的大小
 
         public Record(String name, Table.type kind, int value, int level, int adr) {
             this.name = name;
@@ -127,21 +126,29 @@ public abstract class Table {
         return tab[idx];
     }
     /**
+     * 抽象方法，查找该名字的符号最近的位置（没有则返回0）
      * 对于一个符号名字，在栈式符号表中查找其最近的位置，无法找到则返回 0
-     * 采用顺序查找的方式
-     *
-     * @param s 要查找的符号名
-     * @return  返回要查找的符号名的Item离栈顶最近的位置，找不到则返回 0
-     * @throws Exception
+     * 查找方式按照不同的符号表实现方式不一样
      */
     public abstract int position(String s);
 
+    /**
+     * 把record插入表中，根据不同的表类型有不同的实现
+     * @param record
+     */
     public abstract void enterTable(Record record);
 
+    /**
+     * 把当前符号从表中删除，同样根据不同的表类型实现不同
+     */
     public abstract void pop();
 
+    /**
+     * 将位置为idx的符号修改为record
+     * @param record
+     * @param idx
+     */
     public void modify(Record record, int idx) {
-
         tab[idx] = record;
     }
 
@@ -150,6 +157,21 @@ public abstract class Table {
      *
      * @param start 当前符号表区间的左端
      */
-    public abstract void printTable(int start) ;
+    public void printTable(int start) {
+        if (start > tx) {
+            System.out.println("  NULL");
+        }
+        for (int i = start; i <= tx; i++) {
+            String msg = "table error !";
+            if(tab[i].type == type.constant){
+                msg = i + "  const: " + tab[i].name + "  val: " + tab[i].value;
+            }else if(tab[i].type == type.variable){
+                msg = i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].adr;
+            }else if(tab[i].type == type.procedure){
+                msg = i + "  proc: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].size;
+            }
+            System.out.println(msg);
+        }
+    }
 
 }

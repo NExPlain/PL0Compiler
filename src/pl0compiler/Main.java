@@ -6,7 +6,7 @@ package pl0compiler;
 public class Main {
     public static Compiler compiler = new Compiler();
     public static void main(String args[]){
-        compiler.MODEID = compiler.HASHTABLEMODE;
+        compiler.MODEID = compiler.STACKTABLEMODE;
         if(args.length == 1 && args[0].equals("1")){
             compiler.MODEID = compiler.STACKTABLEMODE;
         }else if(args.length == 1 && args[0].equals("2")){

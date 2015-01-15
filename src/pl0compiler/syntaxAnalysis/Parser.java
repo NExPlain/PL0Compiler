@@ -144,7 +144,6 @@ public class Parser {
             }
             scan.readToEOF();                   // 读取到EOF
         }
-        pcodeVM.listcode(0);
     }
 
     /**
@@ -292,7 +291,6 @@ public class Parser {
         nxtset = new BitSet(Symbol.symbolNumber);                                           //分程序没有补救集合
         test(fsys, nxtset, 8);                                                              //检测后跟符号正确性
 
-        //pcodeVM.listcode(cx0);
 
         dx = dx0;                                                                           //恢复堆栈帧计数器
         while(table.tx > tx0){                                                              //回复名字表位置

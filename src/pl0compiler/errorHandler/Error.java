@@ -8,6 +8,9 @@ import java.util.HashMap;
 
 /**
  * 错误类，用于存储错误类别，输出错误信息
+ * 支持错误判重：
+ * 重复出现的系统错误 或 同一个表示符的标识符未说明 或 不可向常量或过程名赋值 或 不可调用常量或变量 错误多次出现只打印其出现的第一次
+ * 系统错误：符号表溢出 | 嵌套层数过高 | 递归层数超过限制 | 程序不完整 | 多余的程序
  * Created by lizhen on 14/12/3.
  */
 
@@ -20,7 +23,7 @@ public class Error {
             errCnt = 0;
             rem = new HashMap<String, Integer>();
     }
-    public static int errCnt = 0;
+    public static int errCnt = 0;                                       // 系统的错误数量
     public static final String[] errorInfo = new String[]{
             "",
             "1.应是=而不是:=",

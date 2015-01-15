@@ -1,11 +1,11 @@
+SOURCE CODE : 
+****************************
     const a = 1, b = 2;
     procedure swap;
         var a, b, t;
         begin
             a := 1;
-****        ^12.不可向常量或过程名赋值
             b := 2;
-****        ^12.不可向常量或过程名赋值
             t := a;
             a := b;
             b := t
@@ -16,4 +16,28 @@
     end.
     
 ****************************
-COMPILE ERROR: 2 ERRORs
+Accepted
+
+
+PCODE :
+****************************
+0 JMP 0 14
+1 JMP 0 2
+2 INT 0 6
+3 LIT 0 1
+4 STO 0 3
+5 LIT 0 2
+6 STO 0 4
+7 LOD 0 3
+8 STO 0 5
+9 LOD 0 4
+10 STO 0 3
+11 LOD 0 5
+12 STO 0 4
+13 OPR 0 0
+14 INT 0 3
+15 LIT 0 1
+16 WRT 0 0
+17 LIT 0 2
+18 WRT 0 0
+19 OPR 0 0

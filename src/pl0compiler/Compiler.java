@@ -3,7 +3,6 @@ package pl0compiler;
 import pl0compiler.syntaxAnalysis.Parser;
 
 import java.io.*;
-import java.sql.Time;
 import java.util.Calendar;
 
 /**
@@ -53,7 +52,7 @@ public class Compiler {
      * @return
      */
     public boolean compile() {
-        System.out.println("Start compiling in " + MODENAME[MODEID]);
+        System.out.println("****Start compiling in " + MODENAME[MODEID] + "****");
         File file = new File(generalPrefix);
         file.mkdir();
         file = new File(inputFilePrefix);
@@ -66,22 +65,28 @@ public class Compiler {
                 System.out.println(filelist[i] + "不是txt文件，跳过");
                 continue;
             }
-            System.out.print("Compiling " + filelist[i] + "...");
+            System.out.println("****Compiling " + filelist[i] + "...****");
+
             Calendar startTime = Calendar.getInstance();
             try {
                 String add = "/" + filelist[i];
                 parser = new Parser(inputFilePrefix + add);
                 pcodeWriter = new BufferedWriter(new FileWriter(pcodeFilePrefix + add));
                 outputWriter = new BufferedWriter(new FileWriter(outputFilePrefix + add));
+                try {
+                    outputWriter.write("SOURCE CODE : \n");
+                    outputWriter.write("****************************\n");
+                    outputWriter.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 parser.scan.getch();
                 parser.getsym();
                 parser.start();
-
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("compile error");
             }
-            System.out.println("compile completed");
             try {
                 outputWriter.write("****************************\n");
             } catch (IOException e) {
@@ -89,17 +94,21 @@ public class Compiler {
             }
             if (parser.err.errCnt == 0) {
                 try {
+                    System.out.println("Accepted");
                     outputWriter.write("Accepted\n");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }else{
                 try {
-                    outputWriter.write("COMPILE ERROR: " + parser.err.errCnt + " ERROR" + (parser.err.errCnt == 1 ? "" : "s") + '\n');
+                    String errmsg = "COMPILE ERROR: " + parser.err.errCnt + " ERROR" + (parser.err.errCnt == 1 ? "" : "s");
+                    System.out.println(errmsg);
+                    outputWriter.write(errmsg + '\n');
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+            parser.pcodeVM.listcode(0);
             try {
                 pcodeWriter.close();
                 outputWriter.close();
@@ -112,7 +121,7 @@ public class Compiler {
             int deltaMilliSecond = endTime.get(Calendar.MILLISECOND) - startTime.get(Calendar.MILLISECOND);
             deltaSecond = deltaSecond + 60 * deltaMinute;
             deltaMilliSecond = deltaMilliSecond + 1000 * deltaSecond;
-            System.out.println(String.format("Cost %d milliseconds",deltaMilliSecond));
+            System.out.println(String.format("****Cost %d milliseconds****\n",deltaMilliSecond));
         }
         if(parser == null)return false;                                                     // 编译遇到问题
         return (parser.err.errCnt == 0);                                                    // 根据编译错误数量判断编译是否有问题

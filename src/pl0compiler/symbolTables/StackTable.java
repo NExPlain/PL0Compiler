@@ -2,6 +2,7 @@ package pl0compiler.symbolTables;
 
 
 /**
+ * 栈式符号表的实现，继承自
  * Created by lizhen on 15/1/14.
  */
 public class StackTable extends Table {
@@ -44,28 +45,5 @@ public class StackTable extends Table {
             }
         }
         tx--;
-    }
-
-    /**
-     * 输出符号表内容
-     *
-     * @param start 当前符号表区间的左端
-     */
-    public void printTable(int start) {
-        if (start > tx) {
-            System.out.println("  NULL");
-        }
-        for (int i = start; i <= tx; i++) {
-            String msg = "table error !";
-            if(tab[i].type == type.constant){
-                msg = i + "  const: " + tab[i].name + "  val: " + tab[i].value;
-            }else if(tab[i].type == type.variable){
-                msg = i + "  var: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].adr;
-            }else if(tab[i].type == type.procedure){
-                msg = i + "  proc: " + tab[i].name + "  lev: " + tab[i].level + "  adr: " + tab[i].size;
-            }
-            System.out.println(msg);
-
-        }
     }
 }

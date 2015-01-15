@@ -1,3 +1,5 @@
+SOURCE CODE : 
+****************************
     const c1 = 1, c2 = 2;
     var v1,v2;
     procedure gao;
@@ -16,3 +18,34 @@
     end.
 ****************************
 COMPILE ERROR: 2 ERRORs
+
+
+PCODE :
+****************************
+0 JMP 0 20
+1 JMP 0 2
+2 INT 0 5
+3 LIT 0 5
+4 STO 0 3
+5 LIT 0 6
+6 STO 0 4
+7 LOD 0 3
+8 LOD 0 4
+9 OPR 0 2
+10 LIT 0 1
+11 OPR 0 2
+12 STO 1 3
+13 LOD 0 4
+14 LOD 0 4
+15 OPR 0 4
+16 LIT 0 2
+17 OPR 0 4
+18 STO 1 4
+19 OPR 0 0
+20 INT 0 5
+21 CAL 0 2
+22 LOD 0 3
+23 WRT 0 0
+24 LOD 0 4
+25 WRT 0 0
+26 OPR 0 0
