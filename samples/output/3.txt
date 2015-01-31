@@ -130,3 +130,7 @@ PCODE :
 81 LIT 0 0
 82 WRT 0 0
 83 OPR 0 0
+
+****OUTPUT:2****
+****OUTPUT:3****
+****OUTPUT:5****

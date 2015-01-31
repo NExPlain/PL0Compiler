@@ -41,3 +41,6 @@ PCODE :
 17 LIT 0 2
 18 WRT 0 0
 19 OPR 0 0
+
+****OUTPUT:1****
+****OUTPUT:2****

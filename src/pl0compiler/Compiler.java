@@ -1,6 +1,7 @@
 package pl0compiler;
 
 import pl0compiler.syntaxAnalysis.Parser;
+import sun.jvm.hotspot.interpreter.Interpreter;
 
 import java.io.*;
 import java.util.Calendar;
@@ -61,8 +62,8 @@ public class Compiler {
         clean(pcodeFilePrefix);
         String[] filelist = file.list();
         for(int i = 0 ;i < filelist.length ; i ++) {
-            if(!filelist[i].endsWith(".txt")){
-                System.out.println(filelist[i] + "不是txt文件，跳过");
+            if(!filelist[i].endsWith(".txt") && !filelist[i].endsWith(".pl0")){
+                System.out.println(filelist[i] + "不是txt或pl0文件，跳过");
                 continue;
             }
             System.out.println("****Compiling " + filelist[i] + "...****");
@@ -109,6 +110,14 @@ public class Compiler {
                 }
             }
             parser.pcodeVM.listcode(0);
+            try {
+                outputWriter.write('\n');
+                outputWriter.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(parser.err.errCnt == 0)
+                parser.pcodeVM.interpret(new BufferedReader(new InputStreamReader(System.in)), new BufferedWriter(new OutputStreamWriter(System.out)));
             try {
                 pcodeWriter.close();
                 outputWriter.close();

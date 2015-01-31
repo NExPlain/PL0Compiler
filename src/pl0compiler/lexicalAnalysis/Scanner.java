@@ -2,6 +2,7 @@ package pl0compiler.lexicalAnalysis;
 
 import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
+import pl0compiler.syntaxAnalysis.Parser;
 import pl0compiler.utils.Symbol;
 
 import java.io.BufferedReader;
@@ -216,6 +217,8 @@ public class Scanner {
         do {
             if(str.length() < al)
                 str.append(ch);
+            else
+                PL0Exception.handle(42,Compiler.parser.err, this);
             try {
                 getch();
             }catch(PL0Exception e){
@@ -254,5 +257,4 @@ public class Scanner {
         }
         return sym;
     }
-
 }

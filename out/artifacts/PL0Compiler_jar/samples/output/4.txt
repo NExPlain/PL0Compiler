@@ -33,3 +33,6 @@ PCODE :
 12 LOD 0 4
 13 WRT 0 0
 14 OPR 0 0
+
+****OUTPUT:3****
+****OUTPUT:2****

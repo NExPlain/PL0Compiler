@@ -1,6 +1,5 @@
 package pl0compiler.syntaxAnalysis;
 
-import pl0compiler.*;
 import pl0compiler.Compiler;
 import pl0compiler.errorHandler.PL0Exception;
 import pl0compiler.symbolTables.BinaryTable;
@@ -90,7 +89,7 @@ public class Parser {
         }
     }
 
-    public void getsym2(){
+    public void getsymToEOF(){
         try {
             sym = scan.getsym();
         } catch (PL0Exception e) {
@@ -132,7 +131,7 @@ public class Parser {
         }
 
         if(sym.symtype == Symbol.type.nul.val())
-            getsym2();
+            getsymToEOF();
         else                                        // 如果文件还没有读完，则以错误36进行判断
             getsym();
 
@@ -146,6 +145,93 @@ public class Parser {
         }
     }
 
+    /**
+     * 分析<常量说明部分>
+     * @param lev
+     */
+    private void parseConstDecProc(int lev) {
+        if (sym.symtype == Symbol.type.constsym.val()) {                                   //分析<说明部分>
+            getsym();
+            do {
+                constdeclaration(lev);                                                     //分析<常量定义>
+                while (sym.symtype == Symbol.type.comma.val()) {
+                    getsym();
+                    constdeclaration(lev);
+                }
+                if (sym.symtype == Symbol.type.semicolon.val()) {
+                    getsym();
+                } else {
+                    PL0Exception.handle(5, err, scan);                                     //漏了逗号或者分号
+                }
+            } while (sym.symtype == Symbol.type.ident.val());
+        }
+    }
+
+    /**
+     * 分析<变量说明部分>
+     * @param lev
+     */
+
+    private void parseVarDecProc(int lev) {
+        do {
+            getsym();
+            vardeclaration(lev);
+            while (sym.symtype == Symbol.type.comma.val()) {                             //识别{,<标识符>}
+                getsym();
+                vardeclaration(lev);
+            }
+            if (sym.symtype == Symbol.type.semicolon.val())
+            {
+                getsym();
+            } else {
+                PL0Exception.handle(5, err, scan);                                       // error 5: 漏了逗号或者分号
+            }
+        }while(sym.symtype == Symbol.type.ident.val());
+    }
+
+
+    /**
+     * 分析<过程说明部分>
+     * @param fsys
+     * @param lev
+     */
+    private void parseProDecProc(BitSet fsys,int lev){
+        BitSet nxtset = new BitSet();
+        getsym();
+        if (sym.symtype == Symbol.type.ident.val()) {
+            try {
+                table.enter(sym, Table.type.procedure, lev, this);
+            }catch (PL0Exception e){
+                e.handle(err, scan);
+            }
+            getsym();
+        } else {
+            PL0Exception.handle(4, err, scan);                                     // error 4: procedure后应为标识符
+        }
+        if (sym.symtype == Symbol.type.semicolon.val())
+        {
+            getsym();
+        } else {
+            PL0Exception.handle(5, err, scan);                                     // error 5: 漏了逗号或者分号
+        }
+        nxtset = (BitSet) fsys.clone();
+
+        //FOLLOW(block)={ ; }
+        nxtset.set(Symbol.type.semicolon.val());
+        block(lev + 1, nxtset);                                                     // 递归调用，分析下一层分程序
+
+        if (sym.symtype == Symbol.type.semicolon.val()) {
+
+            getsym();
+
+            nxtset = (BitSet) statebegSyms.clone();
+            nxtset.set(Symbol.type.ident.val());
+            nxtset.set(Symbol.type.procsym.val());
+            test(nxtset, fsys, 6);
+        } else {
+            PL0Exception.handle(5, err, scan);                                      //error 5: 漏了逗号或者分号
+        }
+    }
     /**
      * 分程序分析
      * <分程序>：=[<常数说明部分>][<变量说明部分>]{<过程说明部分>}<语句>
@@ -181,79 +267,14 @@ public class Parser {
         }
         do {
             if (sym.symtype == Symbol.type.constsym.val()) {                                   //分析<说明部分>
-                getsym();
-                do {
-                    constdeclaration(lev);                                                     //分析<常量定义>
-                    while (sym.symtype == Symbol.type.comma.val()) {
-                        getsym();
-                        constdeclaration(lev);
-                    }
-                    if (sym.symtype == Symbol.type.semicolon.val())
-                    {
-                        getsym();
-                    } else {
-                        PL0Exception.handle(5, err, scan);                                     //漏了逗号或者分号
-                    }
-                }while(sym.symtype == Symbol.type.ident.val());
+                parseConstDecProc(lev);
             }
             if (sym.symtype == Symbol.type.varsym.val()) {                                      //分析<变量说明>
-                do {
-                    getsym();
-                    vardeclaration(lev);
-                    while (sym.symtype == Symbol.type.comma.val()) {                             //识别{,<标识符>}
-                        getsym();
-                        vardeclaration(lev);
-                    }
-                    if (sym.symtype == Symbol.type.semicolon.val())
-                    {
-                        getsym();
-                    } else {
-                        PL0Exception.handle(5, err, scan);                                       // error 5: 漏了逗号或者分号
-                    }
-                }while(sym.symtype == Symbol.type.ident.val());
+                parseVarDecProc(lev);
             }
-
-            /**
-             * <过程说明部分> ::=  procedure<标识符>; <分程序> ;
-             * FOLLOW(semicolon)={NULL<过程首部>}，
-             */
-            while (sym.symtype == Symbol.type.procsym.val()) {                                   //分析<过程>
-                getsym();
-                if (sym.symtype == Symbol.type.ident.val()) {
-                    try {
-                        table.enter(sym, Table.type.procedure, lev, this);
-                    }catch (PL0Exception e){
-                        e.handle(err, scan);
-                    }
-                    getsym();
-                } else {
-                    PL0Exception.handle(4, err, scan);                                     // error 4: procedure后应为标识符
-                }
-                if (sym.symtype == Symbol.type.semicolon.val())
-                {
-                    getsym();
-                } else {
-                    PL0Exception.handle(5, err, scan);                                     // error 5: 漏了逗号或者分号
-                }
-                nxtset = (BitSet) fsys.clone();
-
-                //FOLLOW(block)={ ; }
-                nxtset.set(Symbol.type.semicolon.val());
-                block(lev + 1, nxtset);                                                     // 递归调用，分析下一层分程序
-
-                if (sym.symtype == Symbol.type.semicolon.val()) {
-
-                    getsym();
-
-                    nxtset = (BitSet) statebegSyms.clone();
-                    nxtset.set(Symbol.type.ident.val());
-                    nxtset.set(Symbol.type.procsym.val());
-                    test(nxtset, fsys, 6);
-                } else {
-                    PL0Exception.handle(5, err, scan);                                      //error 5: 漏了逗号或者分号
-                }
+            while (sym.symtype == Symbol.type.procsym.val()) {                                   //分析<过程说明>
+                parseProDecProc(fsys,lev);
             }
-
             nxtset = (BitSet) statebegSyms.clone();
             nxtset.set(Symbol.type.ident.val());
             test(nxtset, declbegSyms, 7);                                                    //7:应为语句
